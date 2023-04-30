@@ -10,7 +10,7 @@ const useStyles = createStyles(() => ({
   },
 }));
 
-export default function HeaderMiddle() {
+export default function HeaderComponent() {
   const { classes } = useStyles();
 
   return (

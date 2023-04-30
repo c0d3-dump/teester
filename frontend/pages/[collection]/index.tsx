@@ -1,5 +1,8 @@
+import TestComponent from "@/components/TestComponent";
 import { Accordion, Container, createStyles, rem } from "@mantine/core";
+import { useListState } from "@mantine/hooks";
 import { useRouter } from "next/router";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -41,7 +44,24 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const items = ["col-1", "col-2", "col-3"];
+const groups = ["col-1", "col-2", "col-3"];
+const tests = [
+  {
+    id: "x1",
+    type: "GET",
+    url: "profile",
+  },
+  {
+    id: "x2",
+    type: "POST",
+    url: "login",
+  },
+  {
+    id: "x3",
+    type: "GET",
+    url: "profile",
+  },
+];
 
 export default function Collection() {
   const router = useRouter();
@@ -58,19 +78,44 @@ export default function Collection() {
         classNames={classes}
         className={classes.root}
       >
-        {items.map((item, idx) => {
-          return Item({ item });
+        {groups.map((item, idx) => {
+          return Item(item, idx);
         })}
       </Accordion>
     </Container>
   );
 }
 
-function Item(data: any) {
+function Item(item: any, idx: number) {
   return (
-    <Accordion.Item value={data.item}>
-      <Accordion.Control>{data.item}</Accordion.Control>
-      <Accordion.Panel>lorem ipsum</Accordion.Panel>
+    <Accordion.Item key={idx} value={item}>
+      <Accordion.Control>{item}</Accordion.Control>
+      <Accordion.Panel>
+        <Draggable></Draggable>
+      </Accordion.Panel>
     </Accordion.Item>
+  );
+}
+
+export function Draggable() {
+  const [state, handlers] = useListState(tests);
+
+  return (
+    <DragDropContext
+      onDragEnd={({ destination, source }) =>
+        handlers.reorder({ from: source.index, to: destination?.index || 0 })
+      }
+    >
+      <Droppable droppableId="dnd-list" direction="vertical">
+        {(provided) => (
+          <div {...provided.droppableProps} ref={provided.innerRef}>
+            {state.map((test, idx) => {
+              return TestComponent(test, idx);
+            })}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
   );
 }
