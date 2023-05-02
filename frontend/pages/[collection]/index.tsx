@@ -1,8 +1,8 @@
 import TestComponent from "@/components/TestComponent";
-import { Accordion, Container, createStyles, rem } from "@mantine/core";
+import { Accordion, Card, Container, createStyles, rem } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
 import { useRouter } from "next/router";
-import { DragDropContext, Droppable } from "react-beautiful-dnd";
+import { useRef } from "react";
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -91,31 +91,42 @@ function Item(item: any, idx: number) {
     <Accordion.Item key={idx} value={item}>
       <Accordion.Control>{item}</Accordion.Control>
       <Accordion.Panel>
-        <Draggable></Draggable>
+        <Draggables></Draggables>
       </Accordion.Panel>
     </Accordion.Item>
   );
 }
 
-export function Draggable() {
-  const [state, handlers] = useListState(tests);
+export function Draggables() {
+  const [listState, handleList] = useListState(tests);
+
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+
+  const onDragStart = (index: number) => {
+    dragItem.current = index;
+  };
+
+  const onDragEnter = (index: number) => {
+    dragOverItem.current = index;
+  };
+
+  const onDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    handleSort();
+  };
+
+  const handleSort = () => {
+    handleList.reorder({
+      from: dragItem.current ?? 0,
+      to: dragOverItem.current ?? 0,
+    });
+  };
 
   return (
-    <DragDropContext
-      onDragEnd={({ destination, source }) =>
-        handlers.reorder({ from: source.index, to: destination?.index || 0 })
-      }
-    >
-      <Droppable droppableId="dnd-list" direction="vertical">
-        {(provided) => (
-          <div {...provided.droppableProps} ref={provided.innerRef}>
-            {state.map((test, idx) => {
-              return TestComponent(test, idx);
-            })}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <Container>
+      {listState.map((item, idx) => {
+        return TestComponent(item, idx, onDragStart, onDragEnter, onDragEnd);
+      })}
+    </Container>
   );
 }
