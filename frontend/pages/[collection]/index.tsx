@@ -1,8 +1,20 @@
 import TestComponent from "@/components/TestComponent";
-import { Accordion, Card, Container, createStyles, rem } from "@mantine/core";
-import { useListState } from "@mantine/hooks";
+import { CollectionModal, TestModal } from "@/utils/modal";
+import {
+  Accordion,
+  Button,
+  Container,
+  Group,
+  Modal,
+  createStyles,
+  rem,
+  Select,
+  TextInput,
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { useDisclosure, useListState } from "@mantine/hooks";
 import { useRouter } from "next/router";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -44,41 +56,93 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const groups = ["col-1", "col-2", "col-3"];
-const tests = [
+const collections: CollectionModal[] = [
   {
-    id: "x1",
-    type: "GET",
-    url: "profile",
-  },
-  {
-    id: "x2",
-    type: "POST",
-    url: "login",
-  },
-  {
-    id: "x3",
-    type: "GET",
-    url: "profile",
+    name: "collection 1",
+    tests: [
+      {
+        requestType: "GET",
+        url: "/profile",
+        assertionCode: 500,
+        dbName: undefined,
+      },
+      {
+        requestType: "POST",
+        url: "/login",
+        assertionCode: 200,
+        dbName: undefined,
+      },
+      {
+        requestType: undefined,
+        url: undefined,
+        assertionCode: undefined,
+        dbName: "test-db",
+      },
+    ],
   },
 ];
 
 export default function Collection() {
-  const router = useRouter();
+  // const router = useRouter();
+  const [listCollection, setCollection] = useState(collections);
   const { classes } = useStyles();
 
-  const { collection } = router.query;
+  // const { collection } = router.query;
+
+  const onCollection = (name: string) => {
+    const newCollection: CollectionModal = { name, tests: [] };
+    setCollection([...listCollection, newCollection]);
+  };
+
+  const onTest = (data: any) => {
+    const newTest: TestModal = {
+      url: data.url,
+      assertionCode: data.assertionCode,
+      requestType: data.method,
+      dbName: undefined,
+    };
+
+    const idx = listCollection.findIndex((c) => c.name === data.collectionName);
+    const col = [...listCollection];
+    col[idx].tests.push(newTest);
+    setCollection(col);
+  };
+
+  const onDatabase = (data: any) => {
+    const newTest: TestModal = {
+      dbName: data.dbName,
+      requestType: undefined,
+      url: undefined,
+      assertionCode: undefined,
+    };
+
+    console.log(data);
+
+    const idx = listCollection.findIndex((c) => c.name === data.collectionName);
+    const col = [...listCollection];
+    col[idx].tests.push(newTest);
+    setCollection(col);
+  };
 
   return (
     <Container>
+      <Group position="center" my={12}>
+        <AddModal
+          collections={listCollection}
+          onCollection={onCollection}
+          onTest={onTest}
+          onDatabase={onDatabase}
+        ></AddModal>
+        <Button>Run</Button>
+      </Group>
       <Accordion
         mx="auto"
         variant="filled"
-        defaultValue="customization"
+        defaultValue={listCollection[0].name}
         classNames={classes}
         className={classes.root}
       >
-        {groups.map((item, idx) => {
+        {listCollection.map((item, idx) => {
           return Item(item, idx);
         })}
       </Accordion>
@@ -86,19 +150,23 @@ export default function Collection() {
   );
 }
 
-function Item(item: any, idx: number) {
+function Item(item: CollectionModal, idx: number) {
   return (
-    <Accordion.Item key={idx} value={item}>
-      <Accordion.Control>{item}</Accordion.Control>
+    <Accordion.Item key={idx} value={item.name}>
+      <Accordion.Control>{item.name}</Accordion.Control>
       <Accordion.Panel>
-        <Draggables></Draggables>
+        <Draggables items={item.tests}></Draggables>
       </Accordion.Panel>
     </Accordion.Item>
   );
 }
 
-export function Draggables() {
-  const [listState, handleList] = useListState(tests);
+interface DraggableProps {
+  items: TestModal[];
+}
+
+export function Draggables({ items }: DraggableProps) {
+  const [listState, handleList]: [TestModal[], any] = useListState(items);
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -122,11 +190,194 @@ export function Draggables() {
     });
   };
 
+  const onTestClick = (id: any) => {
+    alert(id);
+  };
+
   return (
     <Container>
       {listState.map((item, idx) => {
-        return TestComponent(item, idx, onDragStart, onDragEnter, onDragEnd);
+        return (
+          <TestComponent
+            key={idx}
+            id={idx}
+            item={item}
+            onDragEnd={onDragEnd}
+            onDragEnter={onDragEnter}
+            onDragStart={onDragStart}
+          ></TestComponent>
+        );
       })}
     </Container>
+  );
+}
+
+interface AddModalProps {
+  collections: CollectionModal[];
+  onCollection: Function;
+  onTest: Function;
+  onDatabase: Function;
+}
+
+export function AddModal({
+  collections,
+  onCollection,
+  onTest,
+  onDatabase,
+}: AddModalProps) {
+  const [opened, { open, close }] = useDisclosure(false);
+
+  const form = useForm({
+    initialValues: {
+      type: "collection",
+      collectionName: "",
+      collection: "",
+      method: "GET",
+      url: "",
+      dbLabel: "",
+    },
+  });
+
+  useEffect(() => {
+    if (!opened) {
+      form.reset();
+    }
+  }, [form, opened]);
+
+  const onSubmit = (values: any) => {
+    switch (values.type) {
+      case "collection":
+        onCollection(values.collectionName);
+        break;
+      case "test":
+        onTest({
+          collectionName: values.collection,
+          method: values.method,
+          url: values.url,
+        });
+        break;
+      case "database":
+        onDatabase({
+          collectionName: values.collection,
+          dbName: values.dbLabel,
+        });
+        break;
+      default:
+        break;
+    }
+
+    close();
+  };
+
+  const collectionTypeForm = () => {
+    return (
+      <TextInput
+        label="Collection Name"
+        placeholder="enter name"
+        my={12}
+        {...form.getInputProps("collectionName")}
+      ></TextInput>
+    );
+  };
+
+  const testTypeForm = () => {
+    return (
+      <>
+        <Select
+          label="Select collection"
+          placeholder="pick one"
+          data={collections.map((m) => ({
+            value: m.name,
+            label: m.name,
+          }))}
+          dropdownPosition="bottom"
+          my={12}
+          {...form.getInputProps("collection")}
+        ></Select>
+
+        <Select
+          label="Select type"
+          placeholder="pick one"
+          data={[
+            { value: "GET", label: "GET" },
+            { value: "POST", label: "POST" },
+            { value: "DELETE", label: "DELETE" },
+            { value: "PUT", label: "PUT" },
+          ]}
+          dropdownPosition="top"
+          my={12}
+          {...form.getInputProps("method")}
+        ></Select>
+        <TextInput
+          label="Url"
+          placeholder="url"
+          my={12}
+          {...form.getInputProps("url")}
+        ></TextInput>
+      </>
+    );
+  };
+
+  const dbTypeForm = () => {
+    return (
+      <>
+        <Select
+          label="Select collection"
+          placeholder="pick one"
+          data={collections.map((m) => ({
+            value: m.name,
+            label: m.name,
+          }))}
+          dropdownPosition="bottom"
+          my={12}
+          {...form.getInputProps("collection")}
+        ></Select>
+        <TextInput
+          label="Database Label"
+          placeholder="enter label"
+          my={12}
+          {...form.getInputProps("dbLabel")}
+        ></TextInput>
+      </>
+    );
+  };
+
+  const renderForm = (type: string) => {
+    switch (type) {
+      case "collection":
+        return collectionTypeForm();
+      case "test":
+        return testTypeForm();
+      case "database":
+        return dbTypeForm();
+      default:
+        break;
+    }
+  };
+
+  return (
+    <>
+      <Modal opened={opened} onClose={close} title="Add" padding="md" centered>
+        <form onSubmit={form.onSubmit((values: any) => onSubmit(values))}>
+          <Select
+            label="Select type"
+            placeholder="pick one"
+            data={[
+              { value: "collection", label: "Collection" },
+              { value: "test", label: "Test" },
+              { value: "database", label: "Database" },
+            ]}
+            dropdownPosition="bottom"
+            my={18}
+            {...form.getInputProps("type")}
+          ></Select>
+          {renderForm(form.values.type)}
+          <Button type="submit" mt={24}>
+            Submit
+          </Button>
+        </form>
+      </Modal>
+      <Button onClick={open}>Add</Button>
+    </>
   );
 }
