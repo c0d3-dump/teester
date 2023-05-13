@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func readJson(filename string) (string, error) {
@@ -37,7 +38,7 @@ func fileCheck(filename string) error {
 	if err != nil {
 		fmt.Println("data.json does not exists!")
 		conn, err := os.Create(filename)
-		conn.WriteString("{}")
+		conn.WriteString("[]")
 		conn.Close()
 		return err
 	}
@@ -55,6 +56,12 @@ func main() {
 
 	app := fiber.New()
 
+	app.Use(cors.New())
+
+	// cors.Config{
+	// 	AllowOrigins: "http://localhost:3000",
+	// }
+
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, there!")
 	})
@@ -65,8 +72,10 @@ func main() {
 			return c.SendStatus(404)
 		}
 
-		var jsonStruct map[string]interface{}
+		var jsonStruct []map[string]interface{}
 		json.Unmarshal([]byte(data), &jsonStruct)
+
+		fmt.Println(jsonStruct)
 
 		return c.JSON(jsonStruct)
 	})
@@ -74,6 +83,8 @@ func main() {
 	app.Post("/postData", func(c *fiber.Ctx) error {
 		var body PostBody
 		json.Unmarshal(c.Body(), &body)
+
+		fmt.Println(body)
 
 		err := writeJson(dataFileName, body.Data)
 		if err != nil {

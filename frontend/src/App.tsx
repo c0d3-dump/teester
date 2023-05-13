@@ -1,22 +1,18 @@
 import React from "react";
-// import { useAppDispatch, useAppSelector } from "./redux/base/hooks";
-// import { decrement, increment, selectCount } from "./redux/reducers/counter";
+import { useAppSelector } from "./redux/base/hooks";
+
+import Project from "./components/local/Project";
+import { selectSelected } from "./redux/reducers/selected";
 import Collection from "./components/local/Collection";
 
 function App() {
-  // const count = useAppSelector(selectCount);
-  // const dispatch = useAppDispatch();
+  const selectedProject = useAppSelector(selectSelected);
 
   return (
     <div className="container">
-      <Collection></Collection>
+      {selectedProject < 0 ? <Project></Project> : <Collection></Collection>}
     </div>
   );
 }
 
 export default App;
-
-// <div className="text-red-500">Hello</div>
-// <div>{count}</div>
-// <button onClick={(e) => dispatch(increment())}>Add</button>
-// <button onClick={(e) => dispatch(decrement())}>Remove</button>

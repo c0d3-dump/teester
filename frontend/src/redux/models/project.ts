@@ -1,19 +1,13 @@
 export interface ProjectModel {
   name: string;
-  config: null | ConfigModel;
+  config: ConfigModel;
   collections: CollectionModel[];
 }
 
 export interface ConfigModel {
   host: string;
-  dbType: DBType;
+  dbType: string;
   dbUrl: string;
-}
-
-export enum DBType {
-  SQLITE,
-  MYSQL,
-  POSTGRES,
 }
 
 export interface CollectionModel {
