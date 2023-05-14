@@ -6,7 +6,18 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { cn } from "../../utils";
 import { Button } from "./button";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./alert-dialog";
 
 const Accordion = AccordionPrimitive.Root;
 
@@ -23,15 +34,14 @@ const AccordionItem = React.forwardRef<
 AccordionItem.displayName = "AccordionItem";
 
 interface CustomProps {
-  onAdd: React.MouseEventHandler<HTMLButtonElement>;
-  onDelete: React.MouseEventHandler<HTMLButtonElement>;
+  onDelete: Function;
 }
 
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> &
     CustomProps
->(({ className, children, onAdd, onDelete, ...props }, ref) => (
+>(({ className, children, onDelete, ...props }, ref) => (
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
       ref={ref}
@@ -43,24 +53,7 @@ const AccordionTrigger = React.forwardRef<
     >
       {children}
     </AccordionPrimitive.Trigger>
-    <Button
-      className="my-auto mx-1"
-      variant="ghost"
-      type="button"
-      size="xs"
-      onClick={onAdd}
-    >
-      <Plus color="#00ff00"></Plus>
-    </Button>
-    <Button
-      className="my-auto mr-1"
-      variant="ghost"
-      type="button"
-      size="xs"
-      onClick={onDelete}
-    >
-      <Trash2 color="#ff0000"></Trash2>
-    </Button>
+    <AlertDelete onDelete={() => onDelete()}></AlertDelete>
   </AccordionPrimitive.Header>
 ));
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
@@ -81,5 +74,40 @@ const AccordionContent = React.forwardRef<
   </AccordionPrimitive.Content>
 ));
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
+
+interface AlertDeleteProps {
+  onDelete: Function;
+}
+const AlertDelete = (props: AlertDeleteProps) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild>
+      <Button
+        className="my-auto mx-1 p-2"
+        variant="ghost"
+        type="button"
+        size="xs"
+      >
+        <Trash2 color="#ff0000"></Trash2>
+      </Button>
+    </AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>
+          Do you really want to delete Collection?
+        </AlertDialogTitle>
+        <AlertDialogDescription>
+          This action cannot be undone. This will permanently delete your
+          Collection.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction onClick={() => props.onDelete()}>
+          Continue
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+);
 
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };

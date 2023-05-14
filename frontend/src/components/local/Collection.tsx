@@ -6,118 +6,115 @@ import {
   AccordionTrigger,
 } from "../ui/accordion";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../ui/alert-dialog";
-import { Card, CardHeader, CardTitle } from "../ui/card";
-import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Button } from "../ui/button";
-import { Edit, Plus, Trash2, X } from "lucide-react";
-import { DialogFooter, DialogHeader } from "../ui/dialog";
+import { Edit, Play, Plus, X } from "lucide-react";
+
 import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { useForm } from "react-hook-form";
-import { selectProject } from "src/redux/reducers/project";
+import {
+  addCollection,
+  removeCollection,
+  selectProject,
+  updateCollection,
+} from "src/redux/reducers/project";
 import { selectSelected } from "src/redux/reducers/selected";
-import { ProjectModel } from "src/redux/models/project";
+import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
+import AddEditTestComponent from "./AddEditTest";
+import TestComponent from "./Test";
 
 export default function Collection() {
   const selectedProject = useAppSelector(selectSelected);
   const projects = useAppSelector(selectProject);
+  const dispatch = useAppDispatch();
 
-  const onCardClick = (idx: number) => {};
-
-  const onDeleteClicked = (idx: number) => {};
-
-  interface CardComponentProps {
-    idx: number;
-    name: string;
-  }
-  const CardComponent = (props: CardComponentProps) => (
-    <Card className="my-auto flex justify-between mb-4">
-      <CardHeader
-        onClick={() => onCardClick(props.idx)}
-        className="cursor-pointer hover:bg-[#050b1a] w-full rounded-lg"
-      >
-        <CardTitle>{props.name}</CardTitle>
-      </CardHeader>
-      <div className="flex align-middle">
-        {/* TODO: add idx and data */}
-        <AddEditCardComponent type="EDIT"></AddEditCardComponent>
-
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button size="xs" variant="ghost" className="p-2 my-auto mx-2">
-              <Trash2 color="#ff0000"></Trash2>
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                Do you really want to delete Project?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your
-                project.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDeleteClicked(props.idx)}>
-                Continue
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    </Card>
-  );
+  const onDeleteClicked = (idx: number) => {
+    dispatch(
+      removeCollection({ projectId: selectedProject, collectionId: idx })
+    );
+  };
 
   return (
-    <Accordion type="single" collapsible className="w-full">
-      {projects[selectedProject].collections.map((col, idx) => {
-        return (
-          <AccordionItem value="item-1">
-            <AccordionTrigger onAdd={() => {}} onDelete={() => {}}>
-              {col.name}
-            </AccordionTrigger>
-            <AccordionContent>
-              Yes. It adheres to the WAI-ARIA design pattern.
-            </AccordionContent>
-          </AccordionItem>
-        );
-      })}
-    </Accordion>
+    <>
+      <div className="my-8">
+        <Accordion type="single" collapsible className="w-full">
+          {projects[selectedProject].collections.map((col, idx) => {
+            return (
+              <AccordionItem value={col.name} className="mb-4" key={idx}>
+                <AccordionTrigger onDelete={() => onDeleteClicked(idx)}>
+                  {col.name}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <TestComponent
+                    tests={col.tests}
+                    collectionId={idx}
+                    key={idx}
+                  ></TestComponent>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </div>
+
+      <Button
+        className="fixed right-[24px] bottom-[169px] z-100 p-4"
+        size="xs"
+        variant="secondary"
+        onClick={() => {}}
+      >
+        <Play color="lightgreen"></Play>
+      </Button>
+      <AddEditCardComponent
+        type="EDIT"
+        collectionList={projects[selectedProject].collections}
+      ></AddEditCardComponent>
+      <AddEditCardComponent type="ADD"></AddEditCardComponent>
+    </>
   );
 }
 
 interface AddEditCardComponentProps {
   type: "ADD" | "EDIT";
-  idx?: number;
+  collectionList?: CollectionModel[];
 }
 
 function AddEditCardComponent(props: AddEditCardComponentProps) {
   const [dialogState, setDialogState] = useState(false);
-  const { setValue, register, formState, getValues } = useForm();
+  const { setValue, register, formState, getValues, reset } = useForm();
   const dispatch = useAppDispatch();
+  const selectedProject = useAppSelector(selectSelected);
+  const [selectedCollection, setSelectedCollection] = useState("");
 
-  // useEffect(() => {
-  //   if (props.type === "EDIT") {
-  //     setValue("name", props.data?.name);
-  //     setValue("host", props.data?.config.host);
-  //     setValue("dbType", props.data?.config.dbType);
-  //     setValue("dbUrl", props.data?.config.dbUrl);
-  //   }
-  // }, [props.data, props.type, setValue]);
+  useEffect(() => {
+    if (!dialogState) {
+      reset();
+      setSelectedCollection("");
+    }
+  }, [dialogState, reset]);
+
+  useEffect(() => {
+    if (props.type === "EDIT" && selectedCollection) {
+      const collectionList = props.collectionList ?? [];
+      setValue("name", collectionList[parseInt(selectedCollection)].name);
+    }
+  }, [props.collectionList, props.type, setValue, selectedCollection]);
 
   const onAddClick = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -126,43 +123,37 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
     const isValid = formState.isValid;
 
     if (isValid) {
-      const newProject: ProjectModel = {
+      const newCollection: CollectionModel = {
         name: formData.name,
-        config: {
-          host: formData.host,
-          dbType: formData.dbType,
-          dbUrl: formData.dbUrl,
-        },
-        collections: [],
+        tests: [],
       };
-
-      // dispatch();
+      dispatch(
+        addCollection({ data: newCollection, projectId: selectedProject })
+      );
 
       setDialogState(false);
     }
   };
 
-  const onUpdateClicked = (
-    e: React.FormEvent<HTMLFormElement>,
-    idx: number | undefined
-  ) => {
+  const onUpdateClicked = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = getValues();
     const isValid = formState.isValid;
 
     if (isValid) {
-      // const updatedProject: ProjectModel = {
-      //   name: formData.name,
-      //   config: {
-      //     host: formData.host,
-      //     dbType: formData.dbType,
-      //     dbUrl: formData.dbUrl,
-      //   },
-      //   collections: props.data?.collections ?? [],
-      // };
-
-      // dispatch();
+      const collectionList = props.collectionList ?? [];
+      const updatedCollection: CollectionModel = {
+        name: formData.name,
+        tests: collectionList[parseInt(selectedCollection)].tests ?? [],
+      };
+      dispatch(
+        updateCollection({
+          data: updatedCollection,
+          projectId: selectedProject,
+          collectionId: parseInt(selectedCollection),
+        })
+      );
 
       setDialogState(false);
     }
@@ -174,16 +165,16 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
         className={
           props.type === "ADD"
             ? "fixed right-[24px] bottom-[24px] z-100 p-4"
-            : "p-2 my-auto ml-2"
+            : "fixed right-[24px] bottom-[96px] z-100 p-4"
         }
         size="xs"
-        variant={props.type === "ADD" ? "secondary" : "ghost"}
+        variant="secondary"
         onClick={() => setDialogState(true)}
       >
         {props.type === "ADD" ? (
-          <Plus color="#ffffff"></Plus>
+          <Plus color="lightblue" size={24}></Plus>
         ) : (
-          <Edit color="#ffffff"></Edit>
+          <Edit color="lightgrey" size={24}></Edit>
         )}
       </Button>
 
@@ -198,14 +189,38 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
 
         <DialogHeader>
           <DialogTitle>
-            {props.type === "ADD" ? "Add" : "Edit"} Project
+            {props.type === "ADD" ? "Add" : "Edit"} Collection
           </DialogTitle>
         </DialogHeader>
+
+        {props.type === "EDIT" ? (
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="collection" className="text-right">
+              Collection
+            </Label>
+            <Select onValueChange={(val) => setSelectedCollection(val)}>
+              <SelectTrigger className="w-[278px]" id="collection">
+                <SelectValue placeholder="Select a collection" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {props.collectionList?.map((col, idx) => {
+                    return (
+                      <SelectItem value={idx.toString()} key={idx}>
+                        {col.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
 
         <form
           className="grid gap-4 py-4"
           onSubmit={(e) =>
-            props.type === "ADD" ? onAddClick(e) : onUpdateClicked(e, props.idx)
+            props.type === "ADD" ? onAddClick(e) : onUpdateClicked(e)
           }
         >
           <div className="grid grid-cols-4 items-center gap-4">
@@ -217,43 +232,17 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
               id="name"
               type="text"
               className="col-span-3"
+              disabled={props.type === "EDIT" && !selectedCollection}
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="host" className="text-right">
-              Host
-            </Label>
-            <Input
-              {...register("host", { required: true })}
-              id="host"
-              type="text"
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="dbTypr" className="text-right">
-              DB Type
-            </Label>
-            <select
-              {...register("dbType", { required: true })}
-              className="h-10 w-[278px] items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="SQLITE">SQLITE</option>
-              <option value="MYSQL">MYSQL</option>
-              <option value="POSTGRES">POSTGRES</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="dbUrl" className="text-right">
-              DB Url
-            </Label>
-            <Input
-              {...register("dbUrl", { required: true })}
-              id="dbUrl"
-              type="text"
-              className="col-span-3"
-            />
-          </div>
+
+          {props.type === "EDIT" && selectedCollection ? (
+            <AddEditTestComponent
+              type="ADD"
+              collectionId={parseInt(selectedCollection)}
+            ></AddEditTestComponent>
+          ) : null}
+
           <DialogFooter>
             <Button type="submit" disabled={!formState.isValid}>
               Submit

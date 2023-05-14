@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -75,6 +76,9 @@ func main() {
 		var jsonStruct []map[string]interface{}
 		json.Unmarshal([]byte(data), &jsonStruct)
 
+		fmt.Println()
+		fmt.Println("GET")
+		fmt.Println(time.Now().String())
 		fmt.Println(jsonStruct)
 
 		return c.JSON(jsonStruct)
@@ -84,6 +88,9 @@ func main() {
 		var body PostBody
 		json.Unmarshal(c.Body(), &body)
 
+		fmt.Println()
+		fmt.Println("POST")
+		fmt.Println(time.Now().String())
 		fmt.Println(body)
 
 		err := writeJson(dataFileName, body.Data)

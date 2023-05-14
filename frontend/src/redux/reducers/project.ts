@@ -1,6 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { RootState } from "../base/store";
-import { ProjectModel } from "../models/project";
+import {
+  ApiModel,
+  CollectionModel,
+  DbModel,
+  ProjectModel,
+} from "../models/project";
 import { setProjects } from "src/service";
 
 interface initialStateInterface {
@@ -14,6 +19,26 @@ const initialState: initialStateInterface = {
 interface UpdatePayloadInterface {
   data: ProjectModel;
   idx: number;
+}
+
+interface AddCollectionPayloadInterface {
+  data: CollectionModel;
+  projectId: number;
+}
+
+interface RemoveCollectionPayloadInterface {
+  projectId: number;
+  collectionId: number;
+}
+interface UpdateCollectionPayloadInterface {
+  projectId: number;
+  collectionId: number;
+  data: CollectionModel;
+}
+interface AddTestPayloadInterface {
+  projectId: number;
+  collectionId: number;
+  data: ApiModel | DbModel;
 }
 
 export const projectSlice = createSlice({
@@ -50,10 +75,110 @@ export const projectSlice = createSlice({
         console.log(err);
       });
     },
+    addCollection(
+      state,
+      { payload }: { payload: AddCollectionPayloadInterface }
+    ) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+          tempProj.collections.push(payload.data);
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    removeCollection(
+      state,
+      { payload }: { payload: RemoveCollectionPayloadInterface }
+    ) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+          tempProj.collections = tempProj.collections.filter(
+            (_col, idx) => idx !== payload.collectionId
+          );
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    updateCollection(
+      state,
+      { payload }: { payload: UpdateCollectionPayloadInterface }
+    ) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+
+          tempProj.collections = tempProj.collections.map((col, jdx) => {
+            if (jdx === payload.collectionId) {
+              return payload.data;
+            } else {
+              return col;
+            }
+          });
+
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    addTest(state, { payload }: { payload: AddTestPayloadInterface }) {
+      console.log(payload);
+
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+
+          tempProj.collections = tempProj.collections.map((col, jdx) => {
+            if (jdx === payload.collectionId) {
+              const tempCol = { ...col };
+              tempCol.tests = [...tempCol.tests, payload.data];
+              return tempCol;
+            } else {
+              return col;
+            }
+          });
+
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
   },
 });
 
-export const { setProject, addProject, removeProject, updateProject } = projectSlice.actions;
+export const {
+  setProject,
+  addProject,
+  removeProject,
+  updateProject,
+  addCollection,
+  removeCollection,
+  updateCollection,
+  addTest,
+} = projectSlice.actions;
 
 export const selectProject = (state: RootState) => state.project.value;
 

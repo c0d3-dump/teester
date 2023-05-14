@@ -130,8 +130,14 @@ interface AddEditCardComponentProps {
 
 function AddEditCardComponent(props: AddEditCardComponentProps) {
   const [dialogState, setDialogState] = useState(false);
-  const { setValue, register, formState, getValues } = useForm();
+  const { setValue, register, formState, getValues, reset } = useForm();
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (!dialogState) {
+      reset();
+    }
+  }, [dialogState, reset]);
 
   useEffect(() => {
     if (props.type === "EDIT") {
