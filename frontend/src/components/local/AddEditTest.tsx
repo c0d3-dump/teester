@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { Edit, Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import {
   Dialog,
@@ -9,14 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 import { Label } from "@radix-ui/react-label";
@@ -25,12 +18,8 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/button";
-import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
-import {
-  addCollection,
-  addTest,
-  updateCollection,
-} from "src/redux/reducers/project";
+import { ApiModel, DbModel } from "src/redux/models/project";
+import { addTest, updateTest } from "src/redux/reducers/project";
 import { selectSelected } from "src/redux/reducers/selected";
 import { Textarea } from "../ui/textarea";
 
@@ -184,13 +173,23 @@ function ApiTestComponent(props: TestComponentProps) {
     const isValid = formState.isValid;
 
     if (isValid) {
-      // const newCollection: CollectionModel = {
-      //   name: formData.name,
-      //   tests: [],
-      // };
-      // dispatch(
-      //   addCollection({ data: newCollection, projectId: selectedProject })
-      // );
+      const updatedTest: ApiModel = {
+        name: formData.name,
+        endpoint: formData.endpoint,
+        methodType: formData.methodType,
+        assertion: {
+          status: formData.assertStatus,
+          body: formData.assertBody,
+        },
+      };
+      dispatch(
+        updateTest({
+          projectId: selectedProject,
+          collectionId: props.collectionId,
+          testId: props.testId ?? -1,
+          data: updatedTest,
+        })
+      );
       props.setDialogState(false);
     }
   };
@@ -262,7 +261,7 @@ function ApiTestComponent(props: TestComponentProps) {
 }
 
 function DbTestComponent(props: TestComponentProps) {
-  const { setValue, register, formState, getValues, reset } = useForm();
+  const { setValue, register, formState, getValues } = useForm();
   const dispatch = useAppDispatch();
   const selectedProject = useAppSelector(selectSelected);
 
@@ -303,13 +302,18 @@ function DbTestComponent(props: TestComponentProps) {
     const isValid = formState.isValid;
 
     if (isValid) {
-      // const newCollection: CollectionModel = {
-      //   name: formData.name,
-      //   tests: [],
-      // };
-      // dispatch(
-      //   addCollection({ data: newCollection, projectId: selectedProject })
-      // );
+      const updatedTest: DbModel = {
+        name: formData.name,
+        query: formData.query,
+      };
+      dispatch(
+        updateTest({
+          projectId: selectedProject,
+          collectionId: props.collectionId,
+          testId: props.testId ?? -1,
+          data: updatedTest,
+        })
+      );
       props.setDialogState(false);
     }
   };

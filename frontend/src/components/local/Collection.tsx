@@ -35,7 +35,7 @@ import {
   updateCollection,
 } from "src/redux/reducers/project";
 import { selectSelected } from "src/redux/reducers/selected";
-import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
+import { CollectionModel } from "src/redux/models/project";
 import AddEditTestComponent from "./AddEditTest";
 import TestComponent from "./Test";
 

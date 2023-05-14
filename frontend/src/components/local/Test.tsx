@@ -1,4 +1,4 @@
-import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
+import { ApiModel, DbModel } from "src/redux/models/project";
 import { Card, CardHeader, CardTitle } from "../ui/card";
 import {
   AlertDialog,
@@ -14,6 +14,9 @@ import {
 import { Button } from "../ui/button";
 import { Trash2 } from "lucide-react";
 import AddEditTestComponent from "./AddEditTest";
+import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
+import { removeTest } from "src/redux/reducers/project";
+import { selectSelected } from "src/redux/reducers/selected";
 
 interface TestsProps {
   tests: (ApiModel | DbModel)[];
@@ -21,6 +24,19 @@ interface TestsProps {
 }
 
 export default function TestComponent(props: TestsProps) {
+  const dispatch = useAppDispatch();
+  const selectedProject = useAppSelector(selectSelected);
+
+  const onDeleteClicked = (testId: number) => {
+    dispatch(
+      removeTest({
+        projectId: selectedProject,
+        collectionId: props.collectionId,
+        testId,
+      })
+    );
+  };
+
   return (
     <>
       {props.tests.map((test, idx) => (
@@ -56,7 +72,7 @@ export default function TestComponent(props: TestsProps) {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => {}}>
+                  <AlertDialogAction onClick={() => onDeleteClicked(idx)}>
                     Continue
                   </AlertDialogAction>
                 </AlertDialogFooter>

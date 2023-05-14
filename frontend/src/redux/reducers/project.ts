@@ -40,6 +40,17 @@ interface AddTestPayloadInterface {
   collectionId: number;
   data: ApiModel | DbModel;
 }
+interface UpdateTestPayloadInterface {
+  projectId: number;
+  collectionId: number;
+  testId: number;
+  data: ApiModel | DbModel;
+}
+interface RemoveTestPayloadInterface {
+  projectId: number;
+  collectionId: number;
+  testId: number;
+}
 
 export const projectSlice = createSlice({
   name: "project",
@@ -140,8 +151,6 @@ export const projectSlice = createSlice({
       });
     },
     addTest(state, { payload }: { payload: AddTestPayloadInterface }) {
-      console.log(payload);
-
       state.value = state.value.map((proj, idx) => {
         if (idx === payload.projectId) {
           const tempProj = { ...proj };
@@ -150,6 +159,68 @@ export const projectSlice = createSlice({
             if (jdx === payload.collectionId) {
               const tempCol = { ...col };
               tempCol.tests = [...tempCol.tests, payload.data];
+              return tempCol;
+            } else {
+              return col;
+            }
+          });
+
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    updateTest(state, { payload }: { payload: UpdateTestPayloadInterface }) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+
+          tempProj.collections = tempProj.collections.map((col, jdx) => {
+            if (jdx === payload.collectionId) {
+              const tempCol = { ...col };
+
+              tempCol.tests = tempCol.tests.map((test, kdx) => {
+                if (kdx === payload.testId) {
+                  return payload.data;
+                } else {
+                  return test;
+                }
+              });
+
+              return tempCol;
+            } else {
+              return col;
+            }
+          });
+
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    removeTest(state, { payload }: { payload: RemoveTestPayloadInterface }) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+
+          tempProj.collections = tempProj.collections.map((col, jdx) => {
+            if (jdx === payload.collectionId) {
+              const tempCol = { ...col };
+
+              tempCol.tests = tempCol.tests.filter(
+                (_test, kdx) => kdx !== payload.testId
+              );
+
               return tempCol;
             } else {
               return col;
@@ -178,6 +249,8 @@ export const {
   removeCollection,
   updateCollection,
   addTest,
+  updateTest,
+  removeTest,
 } = projectSlice.actions;
 
 export const selectProject = (state: RootState) => state.project.value;
