@@ -25,7 +25,7 @@ import {
 } from "../ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { getProjects } from "src/service";
+import { getProjects } from "src/utils";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import {
   addProject,
@@ -73,11 +73,11 @@ export default function Project() {
         <CardTitle>{props.name}</CardTitle>
       </CardHeader>
       <div className="flex align-middle">
-        <AddEditCardComponent
+        <AddEditProjectComponent
           type="EDIT"
           idx={props.idx}
           data={projects[props.idx]}
-        ></AddEditCardComponent>
+        ></AddEditProjectComponent>
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -117,27 +117,27 @@ export default function Project() {
         })}
       </div>
 
-      <AddEditCardComponent type="ADD"></AddEditCardComponent>
+      <AddEditProjectComponent type="ADD"></AddEditProjectComponent>
     </>
   );
 }
 
-interface AddEditCardComponentProps {
+interface AddEditProjectComponentProps {
   type: "ADD" | "EDIT";
   idx?: number;
   data?: ProjectModel;
 }
 
-function AddEditCardComponent(props: AddEditCardComponentProps) {
+function AddEditProjectComponent(props: AddEditProjectComponentProps) {
   const [dialogState, setDialogState] = useState(false);
   const { setValue, register, formState, getValues, reset } = useForm();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!dialogState) {
+    if (props.type === "ADD" && !dialogState) {
       reset();
     }
-  }, [dialogState, reset]);
+  }, [dialogState, props.type, reset]);
 
   useEffect(() => {
     if (props.type === "EDIT") {
@@ -264,7 +264,7 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="dbTypr" className="text-right">
+            <Label htmlFor="dbType" className="text-right">
               DB Type
             </Label>
             <select
@@ -273,7 +273,6 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
             >
               <option value="SQLITE">SQLITE</option>
               <option value="MYSQL">MYSQL</option>
-              <option value="POSTGRES">POSTGRES</option>
             </select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">

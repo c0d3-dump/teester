@@ -35,9 +35,11 @@ import {
   updateCollection,
 } from "src/redux/reducers/project";
 import { selectSelected } from "src/redux/reducers/selected";
-import { CollectionModel } from "src/redux/models/project";
+import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
 import AddEditTestComponent from "./AddEditTest";
 import TestComponent from "./Test";
+import { isDeepEqual, runApi, runQuery } from "src/utils";
+import { addTester, clearTester } from "src/redux/reducers/tester";
 
 export default function Collection() {
   const selectedProject = useAppSelector(selectSelected);
@@ -48,6 +50,63 @@ export default function Collection() {
     dispatch(
       removeCollection({ projectId: selectedProject, collectionId: idx })
     );
+  };
+
+  const runTests = async () => {
+    dispatch(clearTester());
+
+    const config = projects[selectedProject].config;
+    projects[selectedProject].collections.forEach((col, idx) => {
+      col.tests.forEach(async (test, jdx) => {
+        if ((test as ApiModel).methodType) {
+          const apiModel = test as ApiModel;
+          const res = await runApi(config.host, apiModel);
+
+          let assertValue = false;
+          if (
+            res.status === parseInt(apiModel.assertion.status.toString()) &&
+            isDeepEqual(res.data, JSON.parse(apiModel.assertion.body))
+          ) {
+            assertValue = true;
+          }
+
+          dispatch(
+            addTester({
+              collectionId: idx,
+              testId: jdx,
+              assert: assertValue,
+            })
+          );
+        } else {
+          let assertValue = false;
+          try {
+            const dbModel = test as DbModel;
+            await runQuery(config.dbType, config.dbUrl, dbModel);
+            assertValue = true;
+          } catch (error) {
+            console.log("Something went wrong with db");
+          }
+
+          dispatch(
+            addTester({
+              collectionId: idx,
+              testId: jdx,
+              assert: assertValue,
+            })
+          );
+        }
+      });
+
+      if ("caches" in window) {
+        caches.keys().then((data) => {
+          data.forEach(async (c) => {
+            await caches.delete(c);
+          });
+        });
+      }
+      localStorage.clear();
+      sessionStorage.clear();
+    });
   };
 
   return (
@@ -77,7 +136,7 @@ export default function Collection() {
         className="fixed right-[24px] bottom-[169px] z-100 p-4"
         size="xs"
         variant="secondary"
-        onClick={() => {}}
+        onClick={() => runTests()}
       >
         <Play color="lightgreen"></Play>
       </Button>
@@ -103,11 +162,11 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
   const [selectedCollection, setSelectedCollection] = useState("");
 
   useEffect(() => {
-    if (!dialogState) {
+    if (props.type === "ADD" && !dialogState) {
       reset();
       setSelectedCollection("");
     }
-  }, [dialogState, reset]);
+  }, [dialogState, props.type, reset]);
 
   useEffect(() => {
     if (props.type === "EDIT" && selectedCollection) {

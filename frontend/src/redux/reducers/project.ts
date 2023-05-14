@@ -6,7 +6,7 @@ import {
   DbModel,
   ProjectModel,
 } from "../models/project";
-import { setProjects } from "src/service";
+import { setProjects } from "src/utils";
 
 interface initialStateInterface {
   value: ProjectModel[];

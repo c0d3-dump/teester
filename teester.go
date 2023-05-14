@@ -1,15 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
 	"os"
-	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	_ "modernc.org/sqlite"
 )
 
 func readJson(filename string) (string, error) {
@@ -32,6 +34,12 @@ func writeJson(filename string, data string) error {
 
 type PostBody struct {
 	Data string `json:"data"`
+}
+
+type QueryBody struct {
+	DbType string `json:"dbType"`
+	DbUrl  string `json:"dbUrl"`
+	Query  string `json:"query"`
 }
 
 func fileCheck(filename string) error {
@@ -76,11 +84,6 @@ func main() {
 		var jsonStruct []map[string]interface{}
 		json.Unmarshal([]byte(data), &jsonStruct)
 
-		fmt.Println()
-		fmt.Println("GET")
-		fmt.Println(time.Now().String())
-		fmt.Println(jsonStruct)
-
 		return c.JSON(jsonStruct)
 	})
 
@@ -88,16 +91,44 @@ func main() {
 		var body PostBody
 		json.Unmarshal(c.Body(), &body)
 
-		fmt.Println()
-		fmt.Println("POST")
-		fmt.Println(time.Now().String())
-		fmt.Println(body)
-
 		err := writeJson(dataFileName, body.Data)
 		if err != nil {
 			return c.SendStatus(404)
 		}
 		return c.SendStatus(201)
+	})
+
+	app.Post("/db-query", func(c *fiber.Ctx) error {
+		var body QueryBody
+		json.Unmarshal(c.Body(), &body)
+
+		var db *sql.DB
+		var err error
+
+		switch body.DbType {
+		case "MYSQL":
+			db, err = sql.Open("mysql", body.DbUrl)
+			if err != nil {
+				fmt.Println(err)
+				return c.SendStatus(400)
+			}
+		case "SQLITE":
+			db, err = sql.Open("sqlite", body.DbUrl)
+			if err != nil {
+				fmt.Println(err)
+				return c.SendStatus(400)
+			}
+		}
+
+		defer db.Close()
+
+		_, err = db.Exec(body.Query)
+		if err != nil {
+			fmt.Println(err)
+			return c.SendStatus(400)
+		}
+
+		return c.SendStatus(200)
 	})
 
 	log.Fatal(app.Listen(":3333"))

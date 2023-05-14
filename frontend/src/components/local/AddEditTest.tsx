@@ -50,7 +50,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
         {props.type}
       </Button>
 
-      <DialogContent className="sm:max-w-[896px] h-[732px] block">
+      <DialogContent className="sm:max-w-[896px] h-[916px] block">
         <DialogPrimitive.Close
           onClick={() => setDialogState(false)}
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
@@ -80,7 +80,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
               Database
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="Api" className="h-[532px]">
+          <TabsContent value="Api" className="h-[716px]">
             <Card className="h-full">
               <CardContent className="space-y-2">
                 <ApiTestComponent
@@ -94,7 +94,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="Database" className="h-[532px]">
+          <TabsContent value="Database" className="h-[716px]">
             <Card className="h-full">
               <CardContent className="space-y-2">
                 <DbTestComponent
@@ -134,6 +134,7 @@ function ApiTestComponent(props: TestComponentProps) {
       setValue("name", apiData.name);
       setValue("methodType", apiData.methodType);
       setValue("endpoint", apiData.endpoint);
+      setValue("body", apiData.body);
       setValue("assertStatus", apiData.assertion.status);
       setValue("assertBody", apiData.assertion.body);
     }
@@ -150,6 +151,7 @@ function ApiTestComponent(props: TestComponentProps) {
         name: formData.name,
         endpoint: formData.endpoint,
         methodType: formData.methodType,
+        body: formData.body,
         assertion: {
           status: formData.assertStatus,
           body: formData.assertBody,
@@ -177,6 +179,7 @@ function ApiTestComponent(props: TestComponentProps) {
         name: formData.name,
         endpoint: formData.endpoint,
         methodType: formData.methodType,
+        body: formData.body,
         assertion: {
           status: formData.assertStatus,
           body: formData.assertBody,
@@ -210,7 +213,7 @@ function ApiTestComponent(props: TestComponentProps) {
         />
       </div>
 
-      <Label>Endpoine</Label>
+      <Label>Endpoint</Label>
       <div className="flex">
         <select
           {...register("methodType", { required: true })}
@@ -230,6 +233,15 @@ function ApiTestComponent(props: TestComponentProps) {
       </div>
 
       <div className="space-y-4">
+        <Label htmlFor="body">Body</Label>
+        <Textarea
+          {...register("body", { required: false })}
+          id="body"
+          className="col-span-3 h-36"
+        />
+      </div>
+
+      <div className="space-y-4">
         <Label htmlFor="status">Status</Label>
         <Input
           {...register("assertStatus", { required: true })}
@@ -239,7 +251,7 @@ function ApiTestComponent(props: TestComponentProps) {
       </div>
 
       <div className="space-y-4">
-        <Label>Body</Label>
+        <Label htmlFor="assertBody">Assert body</Label>
         <Textarea
           {...register("assertBody", { required: false })}
           id="assertBody"
@@ -339,7 +351,7 @@ function DbTestComponent(props: TestComponentProps) {
         <Textarea
           {...register("query", { required: true })}
           id="query"
-          className="col-span-3 h-64"
+          className="col-span-3 h-[532px]"
         />
       </div>
 

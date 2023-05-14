@@ -21,6 +21,7 @@ export interface ApiModel {
   name: string;
   methodType: string;
   endpoint: string;
+  body: string;
   assertion: AssertionModel;
 }
 

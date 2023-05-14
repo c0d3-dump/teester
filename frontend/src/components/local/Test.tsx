@@ -12,11 +12,13 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { Button } from "../ui/button";
-import { Trash2 } from "lucide-react";
+import { Database, Globe2, Trash2 } from "lucide-react";
 import AddEditTestComponent from "./AddEditTest";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { removeTest } from "src/redux/reducers/project";
 import { selectSelected } from "src/redux/reducers/selected";
+import { selectTester } from "src/redux/reducers/tester";
+import { useEffect } from "react";
 
 interface TestsProps {
   tests: (ApiModel | DbModel)[];
@@ -26,6 +28,11 @@ interface TestsProps {
 export default function TestComponent(props: TestsProps) {
   const dispatch = useAppDispatch();
   const selectedProject = useAppSelector(selectSelected);
+  const testers = useAppSelector(selectTester);
+
+  useEffect(() => {
+    console.log(testers);
+  }, [testers]);
 
   const onDeleteClicked = (testId: number) => {
     dispatch(
@@ -37,15 +44,33 @@ export default function TestComponent(props: TestsProps) {
     );
   };
 
+  const isAsserted = (testId: number) =>
+    testers.findIndex(
+      (t) =>
+        t.collectionId === props.collectionId && t.testId === testId && t.assert
+    ) > -1;
+
   return (
     <>
       {props.tests.map((test, idx) => (
-        <Card className="my-auto flex justify-between mb-4" key={idx}>
+        <Card
+          className={`my-auto flex justify-between mb-4 ${
+            isAsserted(idx) ? "border-green-500" : ""
+          }`}
+          key={idx}
+        >
           <CardHeader
             onClick={() => {}}
             className="cursor-pointer w-full rounded-lg"
           >
-            <CardTitle>{test.name}</CardTitle>
+            <CardTitle className="flex gap-2">
+              {(test as ApiModel).methodType ? (
+                <Globe2></Globe2>
+              ) : (
+                <Database></Database>
+              )}
+              {test.name}
+            </CardTitle>
           </CardHeader>
           <div className="flex align-middle">
             <AddEditTestComponent
@@ -56,18 +81,22 @@ export default function TestComponent(props: TestsProps) {
             ></AddEditTestComponent>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button size="xs" variant="ghost" className="p-2 my-auto mx-2">
-                  <Trash2 color="#ff0000"></Trash2>
+                <Button
+                  size="xs"
+                  variant="secondary"
+                  className="p-2 my-auto mx-2"
+                >
+                  <Trash2 color="#ffffff"></Trash2>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Do you really want to delete Project?
+                    Do you really want to delete Test?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
-                    your project.
+                    your Test.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
