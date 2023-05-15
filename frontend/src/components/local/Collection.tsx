@@ -56,8 +56,16 @@ export default function Collection() {
     dispatch(clearTester());
 
     const config = projects[selectedProject].config;
-    projects[selectedProject].collections.forEach((col, idx) => {
-      col.tests.forEach(async (test, jdx) => {
+    for (
+      let idx = 0;
+      idx < projects[selectedProject].collections.length;
+      idx++
+    ) {
+      const col = projects[selectedProject].collections[idx];
+
+      for (let jdx = 0; jdx < col.tests.length; jdx++) {
+        const test = col.tests[jdx];
+
         if ((test as ApiModel).methodType) {
           const apiModel = test as ApiModel;
           const res = await runApi(config.host, apiModel);
@@ -95,7 +103,7 @@ export default function Collection() {
             })
           );
         }
-      });
+      }
 
       if ("caches" in window) {
         caches.keys().then((data) => {
@@ -106,7 +114,7 @@ export default function Collection() {
       }
       localStorage.clear();
       sessionStorage.clear();
-    });
+    }
   };
 
   return (

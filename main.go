@@ -67,11 +67,9 @@ func main() {
 
 	app.Use(cors.New())
 
-	// cors.Config{
-	// 	AllowOrigins: "http://localhost:3000",
-	// }
+	app.Static("/", "./frontend/build")
 
-	app.Get("/", func(c *fiber.Ctx) error {
+	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, there!")
 	})
 
