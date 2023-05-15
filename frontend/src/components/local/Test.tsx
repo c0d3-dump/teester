@@ -18,7 +18,6 @@ import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { removeTest } from "src/redux/reducers/project";
 import { selectSelected } from "src/redux/reducers/selected";
 import { selectTester } from "src/redux/reducers/tester";
-import { useEffect } from "react";
 
 interface TestsProps {
   tests: (ApiModel | DbModel)[];
@@ -30,10 +29,6 @@ export default function TestComponent(props: TestsProps) {
   const selectedProject = useAppSelector(selectSelected);
   const testers = useAppSelector(selectTester);
 
-  useEffect(() => {
-    console.log(testers);
-  }, [testers]);
-
   const onDeleteClicked = (testId: number) => {
     dispatch(
       removeTest({
@@ -43,6 +38,11 @@ export default function TestComponent(props: TestsProps) {
       })
     );
   };
+
+  const isPresent = (testId: number) =>
+    testers.findIndex(
+      (t) => t.collectionId === props.collectionId && t.testId === testId
+    ) > -1;
 
   const isAsserted = (testId: number) =>
     testers.findIndex(
@@ -55,7 +55,11 @@ export default function TestComponent(props: TestsProps) {
       {props.tests.map((test, idx) => (
         <Card
           className={`my-auto flex justify-between mb-4 ${
-            isAsserted(idx) ? "border-green-500" : ""
+            isPresent(idx)
+              ? isAsserted(idx)
+                ? "border-green-500"
+                : "border-red-500"
+              : ""
           }`}
           key={idx}
         >

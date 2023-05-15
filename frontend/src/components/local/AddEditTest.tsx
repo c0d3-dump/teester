@@ -45,12 +45,13 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
         className="p-2 my-auto ml-2"
         size="xs"
         variant="default"
+        type="button"
         onClick={() => setDialogState(true)}
       >
         {props.type}
       </Button>
 
-      <DialogContent className="sm:max-w-[896px] h-[916px] block">
+      <DialogContent className="sm:max-w-[896px] max-h-[90%] block overflow-y-scroll">
         <DialogPrimitive.Close
           onClick={() => setDialogState(false)}
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
@@ -65,7 +66,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue={defaultValue} className="w-[846px] my-4">
+        <Tabs defaultValue={defaultValue} className="sm:max-w-[846px] mt-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger
               value="Api"
@@ -81,7 +82,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="Api" className="h-[716px]">
-            <Card className="h-full">
+            <Card className="h-full border-none">
               <CardContent className="space-y-2">
                 <ApiTestComponent
                   type={props.type}
@@ -95,7 +96,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
             </Card>
           </TabsContent>
           <TabsContent value="Database" className="h-[716px]">
-            <Card className="h-full">
+            <Card className="h-full border-none">
               <CardContent className="space-y-2">
                 <DbTestComponent
                   type={props.type}
@@ -260,11 +261,7 @@ function ApiTestComponent(props: TestComponentProps) {
       </div>
 
       <DialogFooter>
-        <Button
-          type="submit"
-          disabled={!formState.isValid}
-          className="absolute bottom-4 right-6"
-        >
+        <Button type="submit" disabled={!formState.isValid} className="">
           Submit
         </Button>
       </DialogFooter>
@@ -356,11 +353,7 @@ function DbTestComponent(props: TestComponentProps) {
       </div>
 
       <DialogFooter>
-        <Button
-          type="submit"
-          disabled={!formState.isValid}
-          className="absolute bottom-4 right-6"
-        >
+        <Button type="submit" disabled={!formState.isValid}>
           Submit
         </Button>
       </DialogFooter>
