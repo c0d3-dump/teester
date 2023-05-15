@@ -51,6 +51,11 @@ interface RemoveTestPayloadInterface {
   collectionId: number;
   testId: number;
 }
+interface RefreshCollectionPayloadInterface {
+  projectId: number;
+  collectionId: number;
+  data: (ApiModel | DbModel)[];
+}
 
 export const projectSlice = createSlice({
   name: "project",
@@ -237,6 +242,32 @@ export const projectSlice = createSlice({
         console.log(err);
       });
     },
+    refreshCollection(
+      state,
+      { payload }: { payload: RefreshCollectionPayloadInterface }
+    ) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+
+          tempProj.collections = tempProj.collections.map((col, jdx) => {
+            if (jdx === payload.collectionId) {
+              return { name: col.name, tests: payload.data };
+            } else {
+              return col;
+            }
+          });
+
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
   },
 });
 
@@ -251,6 +282,7 @@ export const {
   addTest,
   updateTest,
   removeTest,
+  refreshCollection,
 } = projectSlice.actions;
 
 export const selectProject = (state: RootState) => state.project.value;

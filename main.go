@@ -99,11 +99,13 @@ func main() {
 		body := new(PostBody)
 		err := c.Bind(body)
 		if err != nil {
+			fmt.Println(err)
 			return c.String(http.StatusBadRequest, "")
 		}
 
 		err = writeJson(dataFileName, body.Data)
 		if err != nil {
+			fmt.Println(err)
 			return c.String(http.StatusBadRequest, "")
 		}
 		return c.String(http.StatusCreated, "")
@@ -115,6 +117,7 @@ func main() {
 		body := new(QueryBody)
 		err = c.Bind(body)
 		if err != nil {
+			fmt.Println(err)
 			return c.String(http.StatusBadRequest, "")
 		}
 
