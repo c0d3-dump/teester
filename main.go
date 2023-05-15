@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"main/frontend"
+	"net/http"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	_ "modernc.org/sqlite"
 )
 
@@ -63,58 +65,66 @@ func main() {
 		return
 	}
 
-	app := fiber.New()
+	app := echo.New()
 
-	app.Use(cors.New())
+	app.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		Filesystem: frontend.BuildHTTPFS(),
+		HTML5:      true,
+	}))
 
-	app.Static("/", "./frontend/build")
-
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, there!")
+	app.GET("/health", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello there!")
 	})
 
-	app.Get("/getData", func(c *fiber.Ctx) error {
+	app.GET("/getData", func(c echo.Context) error {
 		data, err := readJson(dataFileName)
 		if err != nil {
-			return c.SendStatus(404)
+			return c.String(http.StatusBadRequest, "")
 		}
 
 		var jsonStruct []map[string]interface{}
 		json.Unmarshal([]byte(data), &jsonStruct)
 
-		return c.JSON(jsonStruct)
+		return c.JSON(http.StatusOK, jsonStruct)
 	})
 
-	app.Post("/postData", func(c *fiber.Ctx) error {
-		var body PostBody
-		json.Unmarshal(c.Body(), &body)
-
-		err := writeJson(dataFileName, body.Data)
+	app.POST("/postData", func(c echo.Context) error {
+		body := new(PostBody)
+		err := c.Bind(body)
 		if err != nil {
-			return c.SendStatus(404)
+			return c.String(http.StatusBadRequest, "")
 		}
-		return c.SendStatus(201)
+
+		err = writeJson(dataFileName, body.Data)
+		if err != nil {
+			return c.String(http.StatusBadRequest, "")
+		}
+		return c.String(http.StatusCreated, "")
 	})
 
-	app.Post("/db-query", func(c *fiber.Ctx) error {
-		var body QueryBody
-		json.Unmarshal(c.Body(), &body)
+	app.POST("/db-query", func(c echo.Context) error {
+		var err error
+
+		body := new(QueryBody)
+		err = c.Bind(body)
+		if err != nil {
+			return c.String(http.StatusBadRequest, "")
+		}
 
 		var db *sql.DB
-		var err error
 
 		switch body.DbType {
 		case "MYSQL":
 			db, err = sql.Open("mysql", body.DbUrl)
 			if err != nil {
 				fmt.Println(err)
-				return c.SendStatus(400)
+				return c.String(http.StatusBadRequest, "")
 			}
 		case "SQLITE":
 			db, err = sql.Open("sqlite", body.DbUrl)
 			if err != nil {
 				fmt.Println(err)
-				return c.SendStatus(400)
+				return c.String(http.StatusBadRequest, "")
 			}
 		}
 
@@ -123,11 +133,11 @@ func main() {
 		_, err = db.Exec(body.Query)
 		if err != nil {
 			fmt.Println(err)
-			return c.SendStatus(400)
+			return c.String(http.StatusBadRequest, "")
 		}
 
-		return c.SendStatus(200)
+		return c.String(http.StatusOK, "")
 	})
 
-	log.Fatal(app.Listen(":3333"))
+	log.Fatal(app.Start(":3333"))
 }
