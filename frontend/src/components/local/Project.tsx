@@ -25,34 +25,22 @@ import {
 } from "../ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { getProjects } from "src/utils";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import {
   addProject,
   removeProject,
   selectProject,
-  setProject,
   updateProject,
 } from "src/redux/reducers/project";
-import { setSelected } from "src/redux/reducers/selected";
+import { useNavigate } from "react-router-dom";
 
 export default function Project() {
   const dispatch = useAppDispatch();
   const projects = useAppSelector(selectProject);
-
-  useEffect(() => {
-    getProjects()
-      .then((res) => {
-        const data: ProjectModel[] = res.data ?? [];
-        dispatch(setProject(data));
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, [dispatch]);
+  const navigate = useNavigate();
 
   const onCardClick = (idx: number) => {
-    dispatch(setSelected(idx));
+    navigate(`/${idx}`);
   };
 
   const onDeleteClicked = (idx: number) => {
@@ -287,7 +275,10 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
             />
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={!formState.isValid}>
+            <Button
+              type="submit"
+              disabled={!formState.isValid && !formState.isDirty}
+            >
               Submit
             </Button>
           </DialogFooter>

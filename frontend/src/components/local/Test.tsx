@@ -16,9 +16,10 @@ import { Database, Globe2, Trash2 } from "lucide-react";
 import AddEditTestComponent from "./AddEditTest";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { refreshCollection, removeTest } from "src/redux/reducers/project";
-import { selectSelected } from "src/redux/reducers/selected";
 import { selectTester } from "src/redux/reducers/tester";
 import { useRef, useState } from "react";
+import { clearTester } from "src/redux/reducers/tester";
+import { useParams } from "react-router-dom";
 
 interface TestsProps {
   tests: (ApiModel | DbModel)[];
@@ -27,15 +28,16 @@ interface TestsProps {
 
 export default function TestComponent(props: TestsProps) {
   const dispatch = useAppDispatch();
-  const selectedProject = useAppSelector(selectSelected);
   const testers = useAppSelector(selectTester);
   const [testListState, setTestListState] = useState(props.tests);
   const [dimState, setDimState] = useState(-1);
+  const params = useParams();
+  const projectId = parseInt(params.projectId ?? "-1");
 
   const onDeleteClicked = (testId: number) => {
     dispatch(
       removeTest({
-        projectId: selectedProject,
+        projectId,
         collectionId: props.collectionId,
         testId,
       })
@@ -77,9 +79,11 @@ export default function TestComponent(props: TestsProps) {
 
     setTestListState(list);
 
+    dispatch(clearTester());
+
     dispatch(
       refreshCollection({
-        projectId: selectedProject,
+        projectId,
         collectionId: props.collectionId,
         data: list,
       })

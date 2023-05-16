@@ -1,16 +1,47 @@
-import React from "react";
-import { useAppSelector } from "./redux/base/hooks";
+import React, { useEffect, useState } from "react";
 
 import Project from "./components/local/Project";
-import { selectSelected } from "./redux/reducers/selected";
 import Collection from "./components/local/Collection";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { ProjectModel } from "./redux/models/project";
+import { setProject } from "./redux/reducers/project";
+import { getProjects } from "./utils";
+import { useAppDispatch } from "./redux/base/hooks";
 
 function App() {
-  const selectedProject = useAppSelector(selectSelected);
+  const dispatch = useAppDispatch();
+  const [isLoading, setLoading] = useState(true);
+
+  const router = createBrowserRouter([
+    {
+      path: "/",
+      Component: Project,
+    },
+    {
+      path: "/:projectId",
+      Component: Collection,
+    },
+  ]);
+
+  useEffect(() => {
+    getProjects()
+      .then((res) => {
+        const data: ProjectModel[] = res.data ?? [];
+        dispatch(setProject(data));
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [dispatch]);
 
   return (
     <div className="container">
-      {selectedProject < 0 ? <Project></Project> : <Collection></Collection>}
+      {isLoading ? (
+        <div></div>
+      ) : (
+        <RouterProvider router={router}></RouterProvider>
+      )}
     </div>
   );
 }

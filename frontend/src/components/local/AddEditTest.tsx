@@ -15,13 +15,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
+import { useAppDispatch } from "src/redux/base/hooks";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/button";
 import { ApiModel, DbModel } from "src/redux/models/project";
 import { addTest, updateTest } from "src/redux/reducers/project";
-import { selectSelected } from "src/redux/reducers/selected";
 import { Textarea } from "../ui/textarea";
+import { useParams } from "react-router-dom";
 
 interface AddEditTestComponentProps {
   type: "ADD" | "EDIT";
@@ -127,7 +127,8 @@ interface TestComponentProps {
 function ApiTestComponent(props: TestComponentProps) {
   const { setValue, register, formState, getValues } = useForm();
   const dispatch = useAppDispatch();
-  const selectedProject = useAppSelector(selectSelected);
+  const params = useParams();
+  const projectId = parseInt(params.projectId ?? "-1");
 
   useEffect(() => {
     if (props.type === "EDIT") {
@@ -160,7 +161,7 @@ function ApiTestComponent(props: TestComponentProps) {
       };
       dispatch(
         addTest({
-          projectId: selectedProject,
+          projectId,
           collectionId: props.collectionId,
           data: newTest,
         })
@@ -188,7 +189,7 @@ function ApiTestComponent(props: TestComponentProps) {
       };
       dispatch(
         updateTest({
-          projectId: selectedProject,
+          projectId,
           collectionId: props.collectionId,
           testId: props.testId ?? -1,
           data: updatedTest,
@@ -272,7 +273,8 @@ function ApiTestComponent(props: TestComponentProps) {
 function DbTestComponent(props: TestComponentProps) {
   const { setValue, register, formState, getValues } = useForm();
   const dispatch = useAppDispatch();
-  const selectedProject = useAppSelector(selectSelected);
+  const params = useParams();
+  const projectId = parseInt(params.projectId ?? "-1");
 
   useEffect(() => {
     if (props.type === "EDIT") {
@@ -295,7 +297,7 @@ function DbTestComponent(props: TestComponentProps) {
       };
       dispatch(
         addTest({
-          projectId: selectedProject,
+          projectId,
           collectionId: props.collectionId,
           data: newTest,
         })
@@ -317,7 +319,7 @@ function DbTestComponent(props: TestComponentProps) {
       };
       dispatch(
         updateTest({
-          projectId: selectedProject,
+          projectId,
           collectionId: props.collectionId,
           testId: props.testId ?? -1,
           data: updatedTest,

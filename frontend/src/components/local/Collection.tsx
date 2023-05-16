@@ -34,34 +34,29 @@ import {
   selectProject,
   updateCollection,
 } from "src/redux/reducers/project";
-import { selectSelected } from "src/redux/reducers/selected";
 import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
 import AddEditTestComponent from "./AddEditTest";
 import TestComponent from "./Test";
 import { isDeepEqual, runApi, runQuery } from "src/utils";
 import { addTester, clearTester } from "src/redux/reducers/tester";
+import { useParams } from "react-router-dom";
 
 export default function Collection() {
-  const selectedProject = useAppSelector(selectSelected);
   const projects = useAppSelector(selectProject);
   const dispatch = useAppDispatch();
+  const params = useParams();
+  const projectId = parseInt(params.projectId ?? "-1");
 
   const onDeleteClicked = (idx: number) => {
-    dispatch(
-      removeCollection({ projectId: selectedProject, collectionId: idx })
-    );
+    dispatch(removeCollection({ projectId, collectionId: idx }));
   };
 
   const runTests = async () => {
     dispatch(clearTester());
 
-    const config = projects[selectedProject].config;
-    for (
-      let idx = 0;
-      idx < projects[selectedProject].collections.length;
-      idx++
-    ) {
-      const col = projects[selectedProject].collections[idx];
+    const config = projects[projectId].config;
+    for (let idx = 0; idx < projects[projectId].collections.length; idx++) {
+      const col = projects[projectId].collections[idx];
 
       for (let jdx = 0; jdx < col.tests.length; jdx++) {
         const test = col.tests[jdx];
@@ -121,7 +116,7 @@ export default function Collection() {
     <>
       <div className="my-8">
         <Accordion type="single" collapsible className="w-full">
-          {projects[selectedProject].collections.map((col, idx) => {
+          {projects[projectId].collections.map((col, idx) => {
             return (
               <AccordionItem value={col.name} className="mb-4" key={idx}>
                 <AccordionTrigger onDelete={() => onDeleteClicked(idx)}>
@@ -148,11 +143,11 @@ export default function Collection() {
       >
         <Play color="lightgreen"></Play>
       </Button>
-      <AddEditCardComponent
+      <AddEditCollectionComponent
         type="EDIT"
-        collectionList={projects[selectedProject].collections}
-      ></AddEditCardComponent>
-      <AddEditCardComponent type="ADD"></AddEditCardComponent>
+        collectionList={projects[projectId].collections}
+      ></AddEditCollectionComponent>
+      <AddEditCollectionComponent type="ADD"></AddEditCollectionComponent>
     </>
   );
 }
@@ -162,19 +157,20 @@ interface AddEditCardComponentProps {
   collectionList?: CollectionModel[];
 }
 
-function AddEditCardComponent(props: AddEditCardComponentProps) {
+function AddEditCollectionComponent(props: AddEditCardComponentProps) {
   const [dialogState, setDialogState] = useState(false);
   const { setValue, register, formState, getValues, reset } = useForm();
   const dispatch = useAppDispatch();
-  const selectedProject = useAppSelector(selectSelected);
   const [selectedCollection, setSelectedCollection] = useState("");
+  const params = useParams();
+  const projectId = parseInt(params.projectId ?? "-1");
 
   useEffect(() => {
-    if (props.type === "ADD" && !dialogState) {
+    if (!dialogState) {
       reset();
       setSelectedCollection("");
     }
-  }, [dialogState, props.type, reset]);
+  }, [dialogState, reset]);
 
   useEffect(() => {
     if (props.type === "EDIT" && selectedCollection) {
@@ -194,9 +190,7 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
         name: formData.name,
         tests: [],
       };
-      dispatch(
-        addCollection({ data: newCollection, projectId: selectedProject })
-      );
+      dispatch(addCollection({ data: newCollection, projectId }));
 
       setDialogState(false);
     }
@@ -217,7 +211,7 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
       dispatch(
         updateCollection({
           data: updatedCollection,
-          projectId: selectedProject,
+          projectId,
           collectionId: parseInt(selectedCollection),
         })
       );
@@ -311,7 +305,10 @@ function AddEditCardComponent(props: AddEditCardComponentProps) {
           ) : null}
 
           <DialogFooter>
-            <Button type="submit" disabled={!formState.isValid}>
+            <Button
+              type="submit"
+              disabled={!formState.isValid && !formState.isDirty}
+            >
               Submit
             </Button>
           </DialogFooter>
