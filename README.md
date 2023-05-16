@@ -1,6 +1,6 @@
 # teester
 
-## small testing utitlity with ui to
+## small testing utitlity with ui
 
 - supports api and database for testing
 
