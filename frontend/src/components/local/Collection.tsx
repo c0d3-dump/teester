@@ -56,19 +56,27 @@ export default function Collection() {
 
     const config = projects[projectId].config;
     const testList = projects[projectId].collections[collectionId].tests;
+    const variables = {};
 
     for (let testId = 0; testId < testList.length; testId++) {
       const test = testList[testId];
 
       if ((test as ApiModel).methodType) {
-        const apiModel = test as ApiModel;
+        const apiModel: any = { ...test };
 
-        const model = {
-          ...apiModel,
-          body: apiModel.body ? JSON.parse(apiModel.body) : {},
-        };
+        try {
+          apiModel.header = JSON.parse(apiModel.header);
+        } catch (error) {
+          apiModel.header = {};
+        }
 
-        const res = await runApi(config.host, model);
+        try {
+          apiModel.body = JSON.parse(apiModel.body);
+        } catch (error) {
+          apiModel.body = {};
+        }
+
+        const res = await runApi(config.host, apiModel);
 
         let assertValue = false;
         if (
@@ -105,13 +113,6 @@ export default function Collection() {
         );
       }
 
-      if ("caches" in window) {
-        caches.keys().then((data) => {
-          data.forEach(async (c) => {
-            await caches.delete(c);
-          });
-        });
-      }
       localStorage.clear();
       sessionStorage.clear();
     }

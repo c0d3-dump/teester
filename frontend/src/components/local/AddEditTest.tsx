@@ -136,6 +136,7 @@ function ApiTestComponent(props: TestComponentProps) {
       setValue("name", apiData.name);
       setValue("methodType", apiData.methodType);
       setValue("endpoint", apiData.endpoint);
+      setValue("header", apiData.header);
       setValue("body", apiData.body);
       setValue("assertStatus", apiData.assertion.status);
       setValue("assertBody", apiData.assertion.body);
@@ -158,6 +159,7 @@ function ApiTestComponent(props: TestComponentProps) {
           status: formData.assertStatus,
           body: formData.assertBody,
         },
+        header: formData.header,
       };
       dispatch(
         addTest({
@@ -186,6 +188,7 @@ function ApiTestComponent(props: TestComponentProps) {
           status: formData.assertStatus,
           body: formData.assertBody,
         },
+        header: formData.header,
       };
       dispatch(
         updateTest({
@@ -234,13 +237,24 @@ function ApiTestComponent(props: TestComponentProps) {
         />
       </div>
 
-      <div className="space-y-4">
-        <Label htmlFor="body">Body</Label>
-        <Textarea
-          {...register("body", { required: false })}
-          id="body"
-          className="col-span-3 h-36"
-        />
+      <div className="flex gap-4">
+        <div className="space-y-4 grow">
+          <Label htmlFor="header">Header</Label>
+          <Textarea
+            {...register("header", { required: false })}
+            id="header"
+            className="col-span-3 h-36"
+          />
+        </div>
+
+        <div className="space-y-4 grow">
+          <Label htmlFor="body">Body</Label>
+          <Textarea
+            {...register("body", { required: false })}
+            id="body"
+            className="col-span-3 h-36"
+          />
+        </div>
       </div>
 
       <div className="space-y-4">

@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import axios from "axios";
 import { env } from "./config";
-import { ApiModel, DbModel, ProjectModel } from "./redux/models/project";
+import { DbModel, ProjectModel } from "./redux/models/project";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -18,34 +18,40 @@ export const getProjects = () => {
   return axios.get(`${env.SERVER_URL}/getData`);
 };
 
-export const runApi = async (host: string, apiModel: ApiModel) => {
-  let status;
-  let data;
-  let res;
+export const runApi = async (host: string, apiModel: any) => {
+  let status: number = -1;
+  let data: string = "";
+  let res: any;
 
   try {
     switch (apiModel.methodType) {
       case "GET":
         res = await axios.get(host + apiModel.endpoint, {
-          data: apiModel.body,
+          headers: apiModel.header,
+          params: apiModel.body,
         });
         status = res.status;
         data = res.data;
         break;
       case "POST":
-        res = await axios.post(host + apiModel.endpoint, apiModel.body);
+        res = await axios.post(host + apiModel.endpoint, apiModel.body, {
+          headers: apiModel.header,
+        });
         status = res.status;
         data = res.data;
         break;
       case "DELETE":
         res = await axios.delete(host + apiModel.endpoint, {
+          headers: apiModel.header,
           data: apiModel.body,
         });
         status = res.status;
         data = res.data;
         break;
       case "PUT":
-        res = await axios.put(host + apiModel.endpoint, apiModel.body);
+        res = await axios.put(host + apiModel.endpoint, apiModel.body, {
+          headers: apiModel.header,
+        });
         status = res.status;
         data = res.data;
         break;
