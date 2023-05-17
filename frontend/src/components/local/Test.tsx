@@ -17,7 +17,7 @@ import AddEditTestComponent from "./AddEditTest";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { refreshCollection, removeTest } from "src/redux/reducers/project";
 import { selectTester } from "src/redux/reducers/tester";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
 
@@ -29,10 +29,16 @@ interface TestsProps {
 export default function TestComponent(props: TestsProps) {
   const dispatch = useAppDispatch();
   const testers = useAppSelector(selectTester);
-  const [testListState, setTestListState] = useState(props.tests);
+  const [testListState, setTestListState] = useState<(ApiModel | DbModel)[]>(
+    []
+  );
   const [dimState, setDimState] = useState(-1);
   const params = useParams();
   const projectId = parseInt(params.projectId ?? "-1");
+
+  useEffect(() => {
+    setTestListState(props.tests);
+  }, [props.tests, testListState.length]);
 
   const onDeleteClicked = (testId: number) => {
     dispatch(

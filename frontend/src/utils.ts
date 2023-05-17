@@ -51,8 +51,13 @@ export const runApi = async (host: string, apiModel: ApiModel) => {
         break;
     }
   } catch (error: any) {
-    status = error.response.status;
-    data = error.response.data;
+    if (!error.response) {
+      status = -1;
+      data = "";
+    } else {
+      status = error.response.status;
+      data = error.response.data;
+    }
   }
 
   return {

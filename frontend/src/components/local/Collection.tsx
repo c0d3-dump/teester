@@ -51,60 +51,58 @@ export default function Collection() {
     dispatch(removeCollection({ projectId, collectionId: idx }));
   };
 
-  const runTests = async () => {
+  const runTests = async (collectionId: number) => {
     dispatch(clearTester());
 
     const config = projects[projectId].config;
-    for (let idx = 0; idx < projects[projectId].collections.length; idx++) {
-      const col = projects[projectId].collections[idx];
+    const testList = projects[projectId].collections[collectionId].tests;
 
-      for (let jdx = 0; jdx < col.tests.length; jdx++) {
-        const test = col.tests[jdx];
+    for (let testId = 0; testId < testList.length; testId++) {
+      const test = testList[testId];
 
-        if ((test as ApiModel).methodType) {
-          const apiModel = test as ApiModel;
+      if ((test as ApiModel).methodType) {
+        const apiModel = test as ApiModel;
 
-          const model = {
-            ...apiModel,
-            body: apiModel.body ? JSON.parse(apiModel.body) : {},
-          };
+        const model = {
+          ...apiModel,
+          body: apiModel.body ? JSON.parse(apiModel.body) : {},
+        };
 
-          const res = await runApi(config.host, model);
+        const res = await runApi(config.host, model);
 
-          let assertValue = false;
-          if (
-            res.status === parseInt(apiModel.assertion.status.toString()) &&
-            (apiModel.assertion.body.length < 1 ||
-              isDeepEqual(res.data, JSON.parse(apiModel.assertion.body)))
-          ) {
-            assertValue = true;
-          }
-
-          dispatch(
-            addTester({
-              collectionId: idx,
-              testId: jdx,
-              assert: assertValue,
-            })
-          );
-        } else {
-          let assertValue = false;
-          try {
-            const dbModel = test as DbModel;
-            await runQuery(config.dbType, config.dbUrl, dbModel);
-            assertValue = true;
-          } catch (error) {
-            console.log("Something went wrong with db");
-          }
-
-          dispatch(
-            addTester({
-              collectionId: idx,
-              testId: jdx,
-              assert: assertValue,
-            })
-          );
+        let assertValue = false;
+        if (
+          res.status === parseInt(apiModel.assertion.status.toString()) &&
+          (apiModel.assertion.body.length < 1 ||
+            isDeepEqual(res.data, JSON.parse(apiModel.assertion.body)))
+        ) {
+          assertValue = true;
         }
+
+        dispatch(
+          addTester({
+            collectionId,
+            testId: testId,
+            assert: assertValue,
+          })
+        );
+      } else {
+        let assertValue = false;
+        try {
+          const dbModel = test as DbModel;
+          await runQuery(config.dbType, config.dbUrl, dbModel);
+          assertValue = true;
+        } catch (error) {
+          console.log("Something went wrong with db");
+        }
+
+        dispatch(
+          addTester({
+            collectionId,
+            testId: testId,
+            assert: assertValue,
+          })
+        );
       }
 
       if ("caches" in window) {
@@ -142,14 +140,11 @@ export default function Collection() {
         </Accordion>
       </div>
 
-      <Button
-        className="fixed right-[24px] bottom-[169px] z-100 p-4"
-        size="xs"
-        variant="secondary"
-        onClick={() => runTests()}
-      >
-        <Play color="lightgreen"></Play>
-      </Button>
+      <AddEditCollectionComponent
+        type="RUN"
+        collectionList={projects[projectId].collections}
+        runTests={runTests}
+      ></AddEditCollectionComponent>
       <AddEditCollectionComponent
         type="EDIT"
         collectionList={projects[projectId].collections}
@@ -159,12 +154,13 @@ export default function Collection() {
   );
 }
 
-interface AddEditCardComponentProps {
-  type: "ADD" | "EDIT";
+interface AddEditCollectionComponentProps {
+  type: "ADD" | "EDIT" | "RUN";
   collectionList?: CollectionModel[];
+  runTests?: (collectionId: number) => Promise<void>;
 }
 
-function AddEditCollectionComponent(props: AddEditCardComponentProps) {
+function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
   const [dialogState, setDialogState] = useState(false);
   const { setValue, register, formState, getValues, reset } = useForm();
   const dispatch = useAppDispatch();
@@ -180,7 +176,7 @@ function AddEditCollectionComponent(props: AddEditCardComponentProps) {
   }, [dialogState, reset]);
 
   useEffect(() => {
-    if (props.type === "EDIT" && selectedCollection) {
+    if (props.type !== "ADD" && selectedCollection) {
       const collectionList = props.collectionList ?? [];
       setValue("name", collectionList[parseInt(selectedCollection)].name);
     }
@@ -227,23 +223,47 @@ function AddEditCollectionComponent(props: AddEditCardComponentProps) {
     }
   };
 
+  const onRunClicked = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    props.runTests?.(parseInt(selectedCollection));
+    setDialogState(false);
+  };
+
+  const buttonClass = () => {
+    switch (props.type) {
+      case "ADD":
+        return "fixed right-[24px] bottom-[24px] z-100 p-4";
+      case "EDIT":
+        return "fixed right-[24px] bottom-[96px] z-100 p-4";
+      case "RUN":
+        return "fixed right-[24px] bottom-[169px] z-100 p-4";
+      default:
+        return "";
+    }
+  };
+
+  const RenderIcon = () => {
+    switch (props.type) {
+      case "ADD":
+        return <Plus color="lightblue" size={24}></Plus>;
+      case "EDIT":
+        return <Edit color="lightgrey" size={24}></Edit>;
+      case "RUN":
+        return <Play color="lightgreen"></Play>;
+      default:
+        return <></>;
+    }
+  };
+
   return (
     <Dialog open={dialogState}>
       <Button
-        className={
-          props.type === "ADD"
-            ? "fixed right-[24px] bottom-[24px] z-100 p-4"
-            : "fixed right-[24px] bottom-[96px] z-100 p-4"
-        }
+        className={buttonClass()}
         size="xs"
         variant="secondary"
         onClick={() => setDialogState(true)}
       >
-        {props.type === "ADD" ? (
-          <Plus color="lightblue" size={24}></Plus>
-        ) : (
-          <Edit color="lightgrey" size={24}></Edit>
-        )}
+        <RenderIcon></RenderIcon>
       </Button>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -256,12 +276,10 @@ function AddEditCollectionComponent(props: AddEditCardComponentProps) {
         </DialogPrimitive.Close>
 
         <DialogHeader>
-          <DialogTitle>
-            {props.type === "ADD" ? "Add" : "Edit"} Collection
-          </DialogTitle>
+          <DialogTitle>{props.type} Collection</DialogTitle>
         </DialogHeader>
 
-        {props.type === "EDIT" ? (
+        {props.type !== "ADD" ? (
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="collection" className="text-right">
               Collection
@@ -288,21 +306,27 @@ function AddEditCollectionComponent(props: AddEditCardComponentProps) {
         <form
           className="grid gap-4 py-4"
           onSubmit={(e) =>
-            props.type === "ADD" ? onAddClick(e) : onUpdateClicked(e)
+            props.type === "ADD"
+              ? onAddClick(e)
+              : props.type === "EDIT"
+              ? onUpdateClicked(e)
+              : onRunClicked(e)
           }
         >
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input
-              {...register("name", { required: true })}
-              id="name"
-              type="text"
-              className="col-span-3"
-              disabled={props.type === "EDIT" && !selectedCollection}
-            />
-          </div>
+          {props.type !== "RUN" ? (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                {...register("name", { required: true })}
+                id="name"
+                type="text"
+                className="col-span-3"
+                disabled={props.type === "EDIT" && !selectedCollection}
+              />
+            </div>
+          ) : null}
 
           {props.type === "EDIT" && selectedCollection ? (
             <AddEditTestComponent
@@ -314,7 +338,10 @@ function AddEditCollectionComponent(props: AddEditCardComponentProps) {
           <DialogFooter>
             <Button
               type="submit"
-              disabled={!formState.isValid && !formState.isDirty}
+              disabled={
+                (!formState.isValid && !formState.isDirty) ||
+                (props.type === "RUN" && !selectedCollection)
+              }
             >
               Submit
             </Button>
