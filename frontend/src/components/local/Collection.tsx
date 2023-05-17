@@ -63,12 +63,19 @@ export default function Collection() {
 
         if ((test as ApiModel).methodType) {
           const apiModel = test as ApiModel;
-          const res = await runApi(config.host, apiModel);
+
+          const model = {
+            ...apiModel,
+            body: apiModel.body ? JSON.parse(apiModel.body) : {},
+          };
+
+          const res = await runApi(config.host, model);
 
           let assertValue = false;
           if (
             res.status === parseInt(apiModel.assertion.status.toString()) &&
-            isDeepEqual(res.data, JSON.parse(apiModel.assertion.body))
+            (apiModel.assertion.body.length < 1 ||
+              isDeepEqual(res.data, JSON.parse(apiModel.assertion.body)))
           ) {
             assertValue = true;
           }
