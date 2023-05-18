@@ -54,6 +54,7 @@ export default function Collection() {
   const projectId = parseInt(params.projectId ?? "-1");
 
   const onDeleteClicked = (idx: number) => {
+    dispatch(clearTester());
     dispatch(removeCollection({ projectId, collectionId: idx }));
   };
 
@@ -80,7 +81,7 @@ export default function Collection() {
         try {
           const body = replaceTokens(apiModel.body, variables);
           console.log(body);
-          
+
           apiModel.body = JSON.parse(body);
         } catch (error) {
           apiModel.body = {};
@@ -214,6 +215,8 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
         name: formData.name,
         tests: [],
       };
+      dispatch(clearTester());
+
       dispatch(addCollection({ data: newCollection, projectId }));
 
       setDialogState(false);
@@ -232,6 +235,8 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
         name: formData.name,
         tests: collectionList[parseInt(selectedCollection)].tests ?? [],
       };
+      dispatch(clearTester());
+
       dispatch(
         updateCollection({
           data: updatedCollection,

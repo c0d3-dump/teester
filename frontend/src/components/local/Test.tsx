@@ -41,6 +41,8 @@ export default function TestComponent(props: TestsProps) {
   }, [props.tests, testListState.length]);
 
   const onDeleteClicked = (testId: number) => {
+    dispatch(clearTester());
+
     dispatch(
       removeTest({
         projectId,

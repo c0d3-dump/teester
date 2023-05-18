@@ -22,6 +22,7 @@ import { ApiModel, DbModel } from "src/redux/models/project";
 import { addTest, updateTest } from "src/redux/reducers/project";
 import { Textarea } from "../ui/textarea";
 import { useParams } from "react-router-dom";
+import { clearTester } from "src/redux/reducers/tester";
 
 interface AddEditTestComponentProps {
   type: "ADD" | "EDIT";
@@ -161,6 +162,8 @@ function ApiTestComponent(props: TestComponentProps) {
         },
         header: formData.header,
       };
+      dispatch(clearTester());
+
       dispatch(
         addTest({
           projectId,
@@ -190,6 +193,8 @@ function ApiTestComponent(props: TestComponentProps) {
         },
         header: formData.header,
       };
+      dispatch(clearTester());
+
       dispatch(
         updateTest({
           projectId,
@@ -309,6 +314,8 @@ function DbTestComponent(props: TestComponentProps) {
         name: formData.name,
         query: formData.query,
       };
+      dispatch(clearTester());
+
       dispatch(
         addTest({
           projectId,
@@ -331,6 +338,8 @@ function DbTestComponent(props: TestComponentProps) {
         name: formData.name,
         query: formData.query,
       };
+      dispatch(clearTester());
+
       dispatch(
         updateTest({
           projectId,
