@@ -84,28 +84,51 @@ export const runQuery = async (
   });
 };
 
-export const isDeepEqual = (object1: any, object2: any) => {
-  const objKeys1 = Object.keys(object1);
-  const objKeys2 = Object.keys(object2);
+export const isDeepEqual = (targetObj: any, sourceObj: any) => {
+  if (typeof targetObj !== "object" || typeof sourceObj !== "object") {
+    if (typeof targetObj === "string" && targetObj.match(/@\{(.*?)\}/))
+      return true;
+    return targetObj === sourceObj;
+  }
 
-  if (objKeys1.length !== objKeys2.length) return false;
+  for (let key in targetObj) {
+    if (targetObj.hasOwnProperty(key)) {
+      if (!sourceObj.hasOwnProperty(key)) {
+        return false;
+      }
 
-  for (var key of objKeys1) {
-    const value1 = object1[key];
-    const value2 = object2[key];
-
-    const isObjects = isObject(value1) && isObject(value2);
-
-    if (
-      (isObjects && !isDeepEqual(value1, value2)) ||
-      (!isObjects && value1 !== value2)
-    ) {
-      return false;
+      if (!isDeepEqual(targetObj[key], sourceObj[key])) {
+        return false;
+      }
     }
   }
+
   return true;
 };
 
-const isObject = (object: any) => {
-  return object != null && typeof object === "object";
+export const extractVariables = (targetObj: any, templateObj: any) => {
+  const variables: any = {};
+
+  for (const i in targetObj) {
+    const targetOb = targetObj[i];
+
+    for (const j in templateObj) {
+      const templateOb = templateObj[j];
+      const tempMap = templateOb.toString().match(/@\{(.*?)\}/);
+
+      if (i === j && tempMap && tempMap[1].length > 0) {
+        variables[tempMap[1]] = targetOb;
+      }
+    }
+  }
+
+  return variables;
+};
+
+export const replaceTokens = (data: string, tokens: any) => {
+  const regex = /\$\{([^}]+)\}/g;
+  return data.replace(regex, (_, match) => {
+    const templateValue = tokens[match];
+    return JSON.stringify(templateValue);
+  });
 };

@@ -37,7 +37,13 @@ import {
 import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
 import AddEditTestComponent from "./AddEditTest";
 import TestComponent from "./Test";
-import { isDeepEqual, runApi, runQuery } from "src/utils";
+import {
+  isDeepEqual,
+  runApi,
+  runQuery,
+  extractVariables,
+  replaceTokens,
+} from "src/utils";
 import { addTester, clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
 
@@ -56,7 +62,7 @@ export default function Collection() {
 
     const config = projects[projectId].config;
     const testList = projects[projectId].collections[collectionId].tests;
-    const variables = {};
+    let variables = {};
 
     for (let testId = 0; testId < testList.length; testId++) {
       const test = testList[testId];
@@ -65,13 +71,17 @@ export default function Collection() {
         const apiModel: any = { ...test };
 
         try {
-          apiModel.header = JSON.parse(apiModel.header);
+          const header = replaceTokens(apiModel.header, variables);
+          apiModel.header = JSON.parse(header);
         } catch (error) {
           apiModel.header = {};
         }
 
         try {
-          apiModel.body = JSON.parse(apiModel.body);
+          const body = replaceTokens(apiModel.body, variables);
+          console.log(body);
+          
+          apiModel.body = JSON.parse(body);
         } catch (error) {
           apiModel.body = {};
         }
@@ -82,8 +92,18 @@ export default function Collection() {
         if (
           res.status === parseInt(apiModel.assertion.status.toString()) &&
           (apiModel.assertion.body.length < 1 ||
-            isDeepEqual(res.data, JSON.parse(apiModel.assertion.body)))
+            isDeepEqual(JSON.parse(apiModel.assertion.body), res.data))
         ) {
+          variables = {
+            ...variables,
+            ...extractVariables(
+              res.data,
+              apiModel.assertion.body.length < 1
+                ? {}
+                : JSON.parse(apiModel.assertion.body)
+            ),
+          };
+
           assertValue = true;
         }
 
@@ -112,10 +132,10 @@ export default function Collection() {
           })
         );
       }
-
-      localStorage.clear();
-      sessionStorage.clear();
     }
+
+    localStorage.clear();
+    sessionStorage.clear();
   };
 
   return (
