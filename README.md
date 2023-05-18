@@ -4,6 +4,13 @@
 
 - supports api and database for testing
 
+### how to run on linux
+
+* downlaod linux binary from [release](https://github.com/c0d3-dump/teester/releases) section
+* make binary executable by giving permission on system
+* run binary using `./teester-linux-64` in terminal
+* now app is running on `http://localhost:3333`
+
 ### how to build for your system
 
 #### make sure you have go installed
