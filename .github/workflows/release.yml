@@ -32,5 +32,14 @@ jobs:
       - name: build Go binary windows
         run: GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o teester-windows-64.exe
 
-      - name: Upload a Build Artifact
+      - name: Upload a Build Artifact for linux
         uses: actions/upload-artifact@v3.1.2
+        with:
+          name: teester-linux-64
+          path: ./teester-linux-64
+      
+      - name: Upload a Build Artifact for windows
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: teester-windows-64.exe
+          path: ./teester-windows-64.exe
