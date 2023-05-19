@@ -1,3 +1,5 @@
+[![basebuild](https://github.com/c0d3-dump/teester/actions/workflows/release.yml/badge.svg)](https://github.com/c0d3-dump/teester/actions/workflows/release.yml)
+
 # teester
 
 ## small testing utitlity with ui
