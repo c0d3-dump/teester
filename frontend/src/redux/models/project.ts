@@ -8,6 +8,7 @@ export interface ConfigModel {
   host: string;
   dbType: string;
   dbUrl: string;
+  header: string;
 }
 
 export interface CollectionModel {

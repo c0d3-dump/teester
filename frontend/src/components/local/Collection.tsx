@@ -72,16 +72,20 @@ export default function Collection() {
         const apiModel: any = { ...test };
 
         try {
+          const configHeader = JSON.parse(config.header);
           const header = replaceTokens(apiModel.header, variables);
-          apiModel.header = JSON.parse(header);
+          apiModel.header = header ? JSON.parse(header) : {};
+
+          apiModel.header = {
+            ...configHeader,
+            ...apiModel.header,
+          };
         } catch (error) {
           apiModel.header = {};
         }
 
         try {
           const body = replaceTokens(apiModel.body, variables);
-          console.log(body);
-
           apiModel.body = JSON.parse(body);
         } catch (error) {
           apiModel.body = {};

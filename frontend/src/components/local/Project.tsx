@@ -33,6 +33,7 @@ import {
   updateProject,
 } from "src/redux/reducers/project";
 import { useNavigate } from "react-router-dom";
+import { Textarea } from "../ui/textarea";
 
 export default function Project() {
   const dispatch = useAppDispatch();
@@ -133,6 +134,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
       setValue("host", props.data?.config.host);
       setValue("dbType", props.data?.config.dbType);
       setValue("dbUrl", props.data?.config.dbUrl);
+      setValue("header", props.data?.config.header);
     }
   }, [props.data, props.type, setValue]);
 
@@ -149,6 +151,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
           host: formData.host,
           dbType: formData.dbType,
           dbUrl: formData.dbUrl,
+          header: formData.header,
         },
         collections: [],
       };
@@ -174,6 +177,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
           host: formData.host,
           dbType: formData.dbType,
           dbUrl: formData.dbUrl,
+          header: formData.header,
         },
         collections: props.data?.collections ?? [],
       };
@@ -274,10 +278,21 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
               className="col-span-3"
             />
           </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="header" className="text-right">
+              Header
+            </Label>
+            <Textarea
+              {...register("header", { required: false })}
+              id="header"
+              className="col-span-3 h-36"
+            />
+          </div>
+
           <DialogFooter>
             <Button
               type="submit"
-              disabled={!formState.isValid && !formState.isDirty}
+              disabled={!formState.isValid || !formState.isDirty}
             >
               Submit
             </Button>
