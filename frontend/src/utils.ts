@@ -126,9 +126,6 @@ export const extractVariables = (targetObj: any, templateObj: any) => {
 };
 
 export const replaceTokens = (data: string, tokens: any) => {
-  const regex = /\$\{([^}]+)\}/g;
-  return data.replace(regex, (_, match) => {
-    const templateValue = tokens[match];
-    return JSON.stringify(templateValue);
-  });
+  const regex = /\$\{(.*?)\}/g;
+  return data.replace(regex, (_, match) => tokens[match]);
 };
