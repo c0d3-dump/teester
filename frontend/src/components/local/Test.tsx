@@ -11,8 +11,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Database, Globe2, Trash2 } from "lucide-react";
+import { AlertTriangle, Database, Globe2, Trash2 } from "lucide-react";
 import AddEditTestComponent from "./AddEditTest";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { refreshCollection, removeTest } from "src/redux/reducers/project";
@@ -20,6 +27,9 @@ import { selectTester } from "src/redux/reducers/tester";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 
 interface TestsProps {
   tests: (ApiModel | DbModel)[];
@@ -149,6 +159,15 @@ export default function TestComponent(props: TestsProps) {
             </CardTitle>
           </CardHeader>
           <div className="flex align-middle">
+            {(test as ApiModel).methodType &&
+            isPresent(idx) &&
+            !isAsserted(idx) ? (
+              <DiffResultComponent
+                collectionId={props.collectionId}
+                test={test as ApiModel}
+                testId={idx}
+              ></DiffResultComponent>
+            ) : null}
             <AddEditTestComponent
               type="EDIT"
               collectionId={props.collectionId}
@@ -187,5 +206,83 @@ export default function TestComponent(props: TestsProps) {
         </Card>
       ))}
     </>
+  );
+}
+
+interface DiffResultComponentProps {
+  collectionId: number;
+  test: ApiModel;
+  testId: number;
+}
+
+export function DiffResultComponent(props: DiffResultComponentProps) {
+  const testers = useAppSelector(selectTester);
+
+  const tester = useCallback(
+    () =>
+      testers.find(
+        (t) =>
+          t.collectionId === props.collectionId && t.testId === props.testId
+      ),
+    [props.collectionId, props.testId, testers]
+  );
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="destructive"
+          className="p-2 my-auto"
+          size="xs"
+        >
+          <AlertTriangle></AlertTriangle>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[896px] max-h-[90%] block overflow-y-scroll">
+        <DialogHeader>
+          <DialogTitle>Diff</DialogTitle>
+        </DialogHeader>
+        <div className="mt-4 mb-4">
+          <div className="flex gap-4 mb-4">
+            <div className="space-y-4 grow">
+              <Label htmlFor="expected" className="flex justify-center">
+                Expected
+              </Label>
+              <Input
+                type="text"
+                disabled
+                value={props.test.assertion.status}
+              ></Input>
+            </div>
+
+            <div className="space-y-4 grow">
+              <Label htmlFor="response" className="flex justify-center">
+                Response
+              </Label>
+              <Input type="text" disabled value={tester()?.status}></Input>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="space-y-4 grow">
+              <Textarea
+                id="expected"
+                className="col-span-3 h-[464px]"
+                value={props.test.assertion.body}
+              />
+            </div>
+
+            <div className="space-y-4 grow">
+              <Textarea
+                id="response"
+                className="col-span-3 h-[464px]"
+                value={JSON.stringify(tester()?.body, null, 2)}
+              />
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

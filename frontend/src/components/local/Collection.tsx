@@ -113,11 +113,20 @@ export default function Collection() {
             assertValue = true;
           }
 
+          let parsedBodyData;
+          try {
+            parsedBodyData = JSON.parse(res.data);
+          } catch (error) {
+            parsedBodyData = res.data;
+          }
+
           dispatch(
             addTester({
               collectionId,
               testId: testId,
               assert: assertValue,
+              status: res.status,
+              body: parsedBodyData,
             })
           );
         } else {
@@ -139,9 +148,6 @@ export default function Collection() {
           );
         }
       }
-
-      localStorage.clear();
-      sessionStorage.clear();
     },
     [dispatch, projectId, projects]
   );
