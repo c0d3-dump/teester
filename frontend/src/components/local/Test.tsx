@@ -17,7 +17,7 @@ import AddEditTestComponent from "./AddEditTest";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { refreshCollection, removeTest } from "src/redux/reducers/project";
 import { selectTester } from "src/redux/reducers/tester";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
 
@@ -40,72 +40,85 @@ export default function TestComponent(props: TestsProps) {
     setTestListState(props.tests);
   }, [props.tests, testListState.length]);
 
-  const onDeleteClicked = (testId: number) => {
-    dispatch(clearTester());
+  const onDeleteClicked = useCallback(
+    (testId: number) => {
+      dispatch(clearTester());
 
-    dispatch(
-      removeTest({
-        projectId,
-        collectionId: props.collectionId,
-        testId,
-      })
-    );
-  };
+      dispatch(
+        removeTest({
+          projectId,
+          collectionId: props.collectionId,
+          testId,
+        })
+      );
+    },
+    [dispatch, projectId, props.collectionId]
+  );
 
-  const isPresent = (testId: number) =>
-    testers.findIndex(
-      (t) => t.collectionId === props.collectionId && t.testId === testId
-    ) > -1;
+  const isPresent = useCallback(
+    (testId: number) =>
+      testers.findIndex(
+        (t) => t.collectionId === props.collectionId && t.testId === testId
+      ) > -1,
+    [props.collectionId, testers]
+  );
 
-  const isAsserted = (testId: number) =>
-    testers.findIndex(
-      (t) =>
-        t.collectionId === props.collectionId && t.testId === testId && t.assert
-    ) > -1;
+  const isAsserted = useCallback(
+    (testId: number) =>
+      testers.findIndex(
+        (t) =>
+          t.collectionId === props.collectionId &&
+          t.testId === testId &&
+          t.assert
+      ) > -1,
+    [props.collectionId, testers]
+  );
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
-  const onDragStart = (index: number) => {
+  const onDragStart = useCallback((index: number) => {
     dragItem.current = index;
-  };
+  }, []);
 
-  const onDragEnter = (index: number) => {
+  const onDragEnter = useCallback((index: number) => {
     dragOverItem.current = index;
-  };
+  }, []);
 
-  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-
     setDimState(dragOverItem.current ?? -1);
-  };
+  }, []);
 
-  const onDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDimState(-1);
-    const list = handleSort();
-
-    setTestListState(list);
-
-    dispatch(clearTester());
-
-    dispatch(
-      refreshCollection({
-        projectId,
-        collectionId: props.collectionId,
-        data: list,
-      })
-    );
-  };
-
-  const handleSort = () => {
+  const handleSort = useCallback(() => {
     const list = [...testListState];
 
     const item = list.splice(dragItem.current ?? 0, 1)[0];
     list.splice(dragOverItem.current ?? 0, 0, item);
 
     return list;
-  };
+  }, [testListState]);
+
+  const onDragEnd = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDimState(-1);
+      const list = handleSort();
+
+      setTestListState(list);
+
+      dispatch(clearTester());
+
+      dispatch(
+        refreshCollection({
+          projectId,
+          collectionId: props.collectionId,
+          data: list,
+        })
+      );
+    },
+    [dispatch, handleSort, projectId, props.collectionId]
+  );
 
   return (
     <>

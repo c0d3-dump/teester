@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { X } from "lucide-react";
 
@@ -144,68 +144,74 @@ function ApiTestComponent(props: TestComponentProps) {
     }
   }, [props.test, props.type, setValue]);
 
-  const onAddClick = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onAddClick = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    const formData = getValues();
-    const isValid = formState.isValid;
+      const formData = getValues();
+      const isValid = formState.isValid;
 
-    if (isValid) {
-      const newTest: ApiModel = {
-        name: formData.name,
-        endpoint: formData.endpoint,
-        methodType: formData.methodType,
-        body: formData.body,
-        assertion: {
-          status: formData.assertStatus,
-          body: formData.assertBody,
-        },
-        header: formData.header,
-      };
-      dispatch(clearTester());
+      if (isValid) {
+        const newTest: ApiModel = {
+          name: formData.name,
+          endpoint: formData.endpoint,
+          methodType: formData.methodType,
+          body: formData.body,
+          assertion: {
+            status: formData.assertStatus,
+            body: formData.assertBody,
+          },
+          header: formData.header,
+        };
+        dispatch(clearTester());
 
-      dispatch(
-        addTest({
-          projectId,
-          collectionId: props.collectionId,
-          data: newTest,
-        })
-      );
-      props.setDialogState(false);
-    }
-  };
+        dispatch(
+          addTest({
+            projectId,
+            collectionId: props.collectionId,
+            data: newTest,
+          })
+        );
+        props.setDialogState(false);
+      }
+    },
+    [dispatch, formState.isValid, getValues, projectId, props]
+  );
 
-  const onUpdateClicked = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onUpdateClicked = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    const formData = getValues();
-    const isValid = formState.isValid;
+      const formData = getValues();
+      const isValid = formState.isValid;
 
-    if (isValid) {
-      const updatedTest: ApiModel = {
-        name: formData.name,
-        endpoint: formData.endpoint,
-        methodType: formData.methodType,
-        body: formData.body,
-        assertion: {
-          status: formData.assertStatus,
-          body: formData.assertBody,
-        },
-        header: formData.header,
-      };
-      dispatch(clearTester());
+      if (isValid) {
+        const updatedTest: ApiModel = {
+          name: formData.name,
+          endpoint: formData.endpoint,
+          methodType: formData.methodType,
+          body: formData.body,
+          assertion: {
+            status: formData.assertStatus,
+            body: formData.assertBody,
+          },
+          header: formData.header,
+        };
+        dispatch(clearTester());
 
-      dispatch(
-        updateTest({
-          projectId,
-          collectionId: props.collectionId,
-          testId: props.testId ?? -1,
-          data: updatedTest,
-        })
-      );
-      props.setDialogState(false);
-    }
-  };
+        dispatch(
+          updateTest({
+            projectId,
+            collectionId: props.collectionId,
+            testId: props.testId ?? -1,
+            data: updatedTest,
+          })
+        );
+        props.setDialogState(false);
+      }
+    },
+    [dispatch, formState.isValid, getValues, projectId, props]
+  );
 
   return (
     <form
@@ -303,54 +309,60 @@ function DbTestComponent(props: TestComponentProps) {
     }
   }, [props.test, props.type, setValue]);
 
-  const onAddClick = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onAddClick = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    const formData = getValues();
-    const isValid = formState.isValid;
+      const formData = getValues();
+      const isValid = formState.isValid;
 
-    if (isValid) {
-      const newTest: DbModel = {
-        name: formData.name,
-        query: formData.query,
-      };
-      dispatch(clearTester());
+      if (isValid) {
+        const newTest: DbModel = {
+          name: formData.name,
+          query: formData.query,
+        };
+        dispatch(clearTester());
 
-      dispatch(
-        addTest({
-          projectId,
-          collectionId: props.collectionId,
-          data: newTest,
-        })
-      );
-      props.setDialogState(false);
-    }
-  };
+        dispatch(
+          addTest({
+            projectId,
+            collectionId: props.collectionId,
+            data: newTest,
+          })
+        );
+        props.setDialogState(false);
+      }
+    },
+    [dispatch, formState.isValid, getValues, projectId, props]
+  );
 
-  const onUpdateClicked = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onUpdateClicked = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    const formData = getValues();
-    const isValid = formState.isValid;
+      const formData = getValues();
+      const isValid = formState.isValid;
 
-    if (isValid) {
-      const updatedTest: DbModel = {
-        name: formData.name,
-        query: formData.query,
-      };
-      dispatch(clearTester());
+      if (isValid) {
+        const updatedTest: DbModel = {
+          name: formData.name,
+          query: formData.query,
+        };
+        dispatch(clearTester());
 
-      dispatch(
-        updateTest({
-          projectId,
-          collectionId: props.collectionId,
-          testId: props.testId ?? -1,
-          data: updatedTest,
-        })
-      );
-      props.setDialogState(false);
-    }
-  };
+        dispatch(
+          updateTest({
+            projectId,
+            collectionId: props.collectionId,
+            testId: props.testId ?? -1,
+            data: updatedTest,
+          })
+        );
+        props.setDialogState(false);
+      }
+    },
+    [dispatch, formState.isValid, getValues, projectId, props]
+  );
 
   return (
     <form
