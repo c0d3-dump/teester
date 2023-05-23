@@ -269,7 +269,8 @@ export function DiffResultComponent(props: DiffResultComponentProps) {
               <Textarea
                 id="expected"
                 className="col-span-3 h-[464px]"
-                value={props.test.assertion.body}
+                readOnly
+                defaultValue={props.test.assertion.body}
               />
             </div>
 
@@ -277,7 +278,8 @@ export function DiffResultComponent(props: DiffResultComponentProps) {
               <Textarea
                 id="response"
                 className="col-span-3 h-[464px]"
-                value={JSON.stringify(tester()?.body, null, 2)}
+                readOnly
+                defaultValue={JSON.stringify(tester()?.body, null, 2)}
               />
             </div>
           </div>
