@@ -87,7 +87,7 @@ const AlertDelete = (props: AlertDeleteProps) => (
         type="button"
         size="xs"
       >
-        <Trash2 color="#ff0000"></Trash2>
+        <Trash2 color="rgb(239 68 68)"></Trash2>
       </Button>
     </AlertDialogTrigger>
     <AlertDialogContent>

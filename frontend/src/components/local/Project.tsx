@@ -77,7 +77,7 @@ export default function Project() {
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button size="xs" variant="ghost" className="p-2 my-auto mx-2">
-              <Trash2 color="#ff0000"></Trash2>
+              <Trash2 color="rgb(239 68 68)"></Trash2>
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
