@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { AlertTriangle, Database, Globe2, Trash2 } from "lucide-react";
+import { AlertTriangle, Database, Globe2, Info, Trash2 } from "lucide-react";
 import AddEditTestComponent from "./AddEditTest";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { refreshCollection, removeTest } from "src/redux/reducers/project";
@@ -159,15 +159,13 @@ export default function TestComponent(props: TestsProps) {
             </CardTitle>
           </CardHeader>
           <div className="flex align-middle">
-            {(test as ApiModel).methodType &&
-            isPresent(idx) &&
-            !isAsserted(idx) ? (
+            {(test as ApiModel).methodType && isPresent(idx) && (
               <DiffResultComponent
                 collectionId={props.collectionId}
                 test={test as ApiModel}
                 testId={idx}
               ></DiffResultComponent>
-            ) : null}
+            )}
             <AddEditTestComponent
               type="EDIT"
               collectionId={props.collectionId}
@@ -230,13 +228,12 @@ export function DiffResultComponent(props: DiffResultComponentProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="destructive"
-          className="p-2 my-auto"
-          size="xs"
-        >
-          <AlertTriangle></AlertTriangle>
+        <Button type="button" variant="ghost" className="p-2 my-auto" size="xs">
+          {tester()?.assert ? (
+            <Info color="rgb(34 197 94)"></Info>
+          ) : (
+            <AlertTriangle color="rgb(239 68 68)"></AlertTriangle>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[896px] max-h-[90%] block overflow-y-scroll">

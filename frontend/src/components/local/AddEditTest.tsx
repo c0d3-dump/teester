@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { X } from "lucide-react";
+import { Edit, X } from "lucide-react";
 
 import {
   Dialog,
@@ -45,11 +45,11 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
       <Button
         className="p-2 my-auto ml-2"
         size="xs"
-        variant="default"
+        variant={props.type === "ADD" ? "default" : "ghost"}
         type="button"
         onClick={() => setDialogState(true)}
       >
-        {props.type}
+        {props.type === "ADD" ? "ADD" : <Edit></Edit>}
       </Button>
 
       <DialogContent className="sm:max-w-[896px] max-h-[90%] block overflow-y-scroll">
