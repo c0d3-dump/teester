@@ -28,3 +28,21 @@ make all
 ```
 
 ### app is runnnig on http://localhost:3333
+
+---
+
+## todos:
+
+- [x] : initial application
+- [x] : embed frontend with go binary
+- [x] : setup routing
+- [x] : set header globally and locally
+- [x] : only compare response with given body
+- [x] : take params and pass in next query
+- [x] : show diffs after test run
+- [x] : run single test
+- [ ] : run all collection
+- [ ] : move tests across collections
+- [ ] : file uploads
+- [ ] : self updatable binary
+- [ ] : suggest new ideas
