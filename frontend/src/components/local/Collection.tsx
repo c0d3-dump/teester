@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -58,90 +58,99 @@ export default function Collection() {
     dispatch(removeCollection({ projectId, collectionId: idx }));
   };
 
-  const runTests = async (collectionId: number) => {
-    dispatch(clearTester());
+  const runTests = useCallback(
+    async (collectionId: number) => {
+      dispatch(clearTester());
 
-    const config = projects[projectId].config;
-    const testList = projects[projectId].collections[collectionId].tests;
-    let variables = {};
+      const config = projects[projectId].config;
+      const testList = projects[projectId].collections[collectionId].tests;
+      let variables = {};
 
-    for (let testId = 0; testId < testList.length; testId++) {
-      const test = testList[testId];
+      for (let testId = 0; testId < testList.length; testId++) {
+        const test = testList[testId];
 
-      if ((test as ApiModel).methodType) {
-        const apiModel: any = { ...test };
+        if ((test as ApiModel).methodType) {
+          const apiModel: any = { ...test };
 
-        try {
-          const configHeader = JSON.parse(config.header);
-          const header = replaceTokens(apiModel.header, variables);
-          apiModel.header = header ? JSON.parse(header) : {};
+          try {
+            const configHeader = JSON.parse(config.header);
+            const header = replaceTokens(apiModel.header, variables);
+            apiModel.header = header ? JSON.parse(header) : {};
 
-          apiModel.header = {
-            ...configHeader,
-            ...apiModel.header,
-          };
-        } catch (error) {
-          apiModel.header = {};
+            apiModel.header = {
+              ...configHeader,
+              ...apiModel.header,
+            };
+          } catch (error) {
+            apiModel.header = {};
+          }
+
+          try {
+            const body = replaceTokens(apiModel.body, variables);
+            apiModel.body = JSON.parse(body);
+          } catch (error) {
+            apiModel.body = {};
+          }
+
+          const res = await runApi(config.host, apiModel);
+
+          let assertValue = false;
+          if (
+            res.status === parseInt(apiModel.assertion.status.toString()) &&
+            (apiModel.assertion.body.length < 1 ||
+              isDeepEqual(JSON.parse(apiModel.assertion.body), res.data))
+          ) {
+            variables = {
+              ...variables,
+              ...extractVariables(
+                res.data,
+                apiModel.assertion.body.length < 1
+                  ? {}
+                  : JSON.parse(apiModel.assertion.body)
+              ),
+            };
+
+            assertValue = true;
+          }
+
+          let parsedBodyData;
+          try {
+            parsedBodyData = JSON.parse(res.data);
+          } catch (error) {
+            parsedBodyData = res.data;
+          }
+
+          dispatch(
+            addTester({
+              collectionId,
+              testId: testId,
+              assert: assertValue,
+              status: res.status,
+              body: parsedBodyData,
+            })
+          );
+        } else {
+          let assertValue = false;
+          try {
+            const dbModel = test as DbModel;
+            await runQuery(config.dbType, config.dbUrl, dbModel);
+            assertValue = true;
+          } catch (error) {
+            console.log("Something went wrong with db");
+          }
+
+          dispatch(
+            addTester({
+              collectionId,
+              testId: testId,
+              assert: assertValue,
+            })
+          );
         }
-
-        try {
-          const body = replaceTokens(apiModel.body, variables);
-          apiModel.body = JSON.parse(body);
-        } catch (error) {
-          apiModel.body = {};
-        }
-
-        const res = await runApi(config.host, apiModel);
-
-        let assertValue = false;
-        if (
-          res.status === parseInt(apiModel.assertion.status.toString()) &&
-          (apiModel.assertion.body.length < 1 ||
-            isDeepEqual(JSON.parse(apiModel.assertion.body), res.data))
-        ) {
-          variables = {
-            ...variables,
-            ...extractVariables(
-              res.data,
-              apiModel.assertion.body.length < 1
-                ? {}
-                : JSON.parse(apiModel.assertion.body)
-            ),
-          };
-
-          assertValue = true;
-        }
-
-        dispatch(
-          addTester({
-            collectionId,
-            testId: testId,
-            assert: assertValue,
-          })
-        );
-      } else {
-        let assertValue = false;
-        try {
-          const dbModel = test as DbModel;
-          await runQuery(config.dbType, config.dbUrl, dbModel);
-          assertValue = true;
-        } catch (error) {
-          console.log("Something went wrong with db");
-        }
-
-        dispatch(
-          addTester({
-            collectionId,
-            testId: testId,
-            assert: assertValue,
-          })
-        );
       }
-    }
-
-    localStorage.clear();
-    sessionStorage.clear();
-  };
+    },
+    [dispatch, projectId, projects]
+  );
 
   return (
     <>
@@ -208,58 +217,74 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
     }
   }, [props.collectionList, props.type, setValue, selectedCollection]);
 
-  const onAddClick = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onAddClick = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    const formData = getValues();
-    const isValid = formState.isValid;
+      const formData = getValues();
+      const isValid = formState.isValid;
 
-    if (isValid) {
-      const newCollection: CollectionModel = {
-        name: formData.name,
-        tests: [],
-      };
-      dispatch(clearTester());
+      if (isValid) {
+        const newCollection: CollectionModel = {
+          name: formData.name,
+          tests: [],
+        };
+        dispatch(clearTester());
 
-      dispatch(addCollection({ data: newCollection, projectId }));
+        dispatch(addCollection({ data: newCollection, projectId }));
 
+        setDialogState(false);
+      }
+    },
+    [dispatch, formState.isValid, getValues, projectId]
+  );
+
+  const onUpdateClicked = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      const formData = getValues();
+      const isValid = formState.isValid;
+
+      if (isValid) {
+        const collectionList = props.collectionList ?? [];
+        const updatedCollection: CollectionModel = {
+          name: formData.name,
+          tests: collectionList[parseInt(selectedCollection)].tests ?? [],
+        };
+        dispatch(clearTester());
+
+        dispatch(
+          updateCollection({
+            data: updatedCollection,
+            projectId,
+            collectionId: parseInt(selectedCollection),
+          })
+        );
+
+        setDialogState(false);
+      }
+    },
+    [
+      dispatch,
+      formState.isValid,
+      getValues,
+      projectId,
+      props.collectionList,
+      selectedCollection,
+    ]
+  );
+
+  const onRunClicked = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      props.runTests?.(parseInt(selectedCollection));
       setDialogState(false);
-    }
-  };
+    },
+    [props, selectedCollection]
+  );
 
-  const onUpdateClicked = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const formData = getValues();
-    const isValid = formState.isValid;
-
-    if (isValid) {
-      const collectionList = props.collectionList ?? [];
-      const updatedCollection: CollectionModel = {
-        name: formData.name,
-        tests: collectionList[parseInt(selectedCollection)].tests ?? [],
-      };
-      dispatch(clearTester());
-
-      dispatch(
-        updateCollection({
-          data: updatedCollection,
-          projectId,
-          collectionId: parseInt(selectedCollection),
-        })
-      );
-
-      setDialogState(false);
-    }
-  };
-
-  const onRunClicked = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    props.runTests?.(parseInt(selectedCollection));
-    setDialogState(false);
-  };
-
-  const buttonClass = () => {
+  const buttonClass = useCallback(() => {
     switch (props.type) {
       case "ADD":
         return "fixed right-[24px] bottom-[24px] z-100 p-4";
@@ -270,9 +295,9 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
       default:
         return "";
     }
-  };
+  }, [props.type]);
 
-  const RenderIcon = () => {
+  const RenderIcon = useCallback(() => {
     switch (props.type) {
       case "ADD":
         return <Plus color="lightblue" size={24}></Plus>;
@@ -283,7 +308,7 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
       default:
         return <></>;
     }
-  };
+  }, [props.type]);
 
   return (
     <Dialog open={dialogState}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle } from "../ui/card";
 import { ProjectModel } from "src/redux/models/project";
 import { Button } from "../ui/button";
@@ -40,13 +40,19 @@ export default function Project() {
   const projects = useAppSelector(selectProject);
   const navigate = useNavigate();
 
-  const onCardClick = (idx: number) => {
-    navigate(`/${idx}`);
-  };
+  const onCardClick = useCallback(
+    (idx: number) => {
+      navigate(`/${idx}`);
+    },
+    [navigate]
+  );
 
-  const onDeleteClicked = (idx: number) => {
-    dispatch(removeProject(idx));
-  };
+  const onDeleteClicked = useCallback(
+    (idx: number) => {
+      dispatch(removeProject(idx));
+    },
+    [dispatch]
+  );
 
   interface CardComponentProps {
     idx: number;
@@ -71,7 +77,7 @@ export default function Project() {
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button size="xs" variant="ghost" className="p-2 my-auto mx-2">
-              <Trash2 color="#ff0000"></Trash2>
+              <Trash2 color="rgb(239 68 68)"></Trash2>
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -138,60 +144,63 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
     }
   }, [props.data, props.type, setValue]);
 
-  const onAddClick = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onAddClick = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    const formData = getValues();
-    const isValid = formState.isValid;
+      const formData = getValues();
+      const isValid = formState.isValid;
 
-    if (isValid) {
-      const newProject: ProjectModel = {
-        name: formData.name,
-        config: {
-          host: formData.host,
-          dbType: formData.dbType,
-          dbUrl: formData.dbUrl,
-          header: formData.header,
-        },
-        collections: [],
-      };
-      dispatch(addProject(newProject));
+      if (isValid) {
+        const newProject: ProjectModel = {
+          name: formData.name,
+          config: {
+            host: formData.host,
+            dbType: formData.dbType,
+            dbUrl: formData.dbUrl,
+            header: formData.header,
+          },
+          collections: [],
+        };
+        dispatch(addProject(newProject));
 
-      setDialogState(false);
-    }
-  };
+        setDialogState(false);
+      }
+    },
+    [dispatch, formState.isValid, getValues]
+  );
 
-  const onUpdateClicked = (
-    e: React.FormEvent<HTMLFormElement>,
-    idx: number | undefined
-  ) => {
-    e.preventDefault();
+  const onUpdateClicked = useCallback(
+    (e: React.FormEvent<HTMLFormElement>, idx: number | undefined) => {
+      e.preventDefault();
 
-    const formData = getValues();
-    const isValid = formState.isValid;
+      const formData = getValues();
+      const isValid = formState.isValid;
 
-    if (isValid) {
-      const updatedProject: ProjectModel = {
-        name: formData.name,
-        config: {
-          host: formData.host,
-          dbType: formData.dbType,
-          dbUrl: formData.dbUrl,
-          header: formData.header,
-        },
-        collections: props.data?.collections ?? [],
-      };
+      if (isValid) {
+        const updatedProject: ProjectModel = {
+          name: formData.name,
+          config: {
+            host: formData.host,
+            dbType: formData.dbType,
+            dbUrl: formData.dbUrl,
+            header: formData.header,
+          },
+          collections: props.data?.collections ?? [],
+        };
 
-      dispatch(
-        updateProject({
-          idx: idx ?? -1,
-          data: updatedProject,
-        })
-      );
+        dispatch(
+          updateProject({
+            idx: idx ?? -1,
+            data: updatedProject,
+          })
+        );
 
-      setDialogState(false);
-    }
-  };
+        setDialogState(false);
+      }
+    },
+    [dispatch, formState.isValid, getValues, props.data?.collections]
+  );
 
   return (
     <Dialog open={dialogState}>
