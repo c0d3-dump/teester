@@ -161,6 +161,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
             header: formData.header,
           },
           collections: [],
+          fakers: [],
         };
         dispatch(addProject(newProject));
 
@@ -187,6 +188,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
             header: formData.header,
           },
           collections: props.data?.collections ?? [],
+          fakers: props.data?.fakers ?? [],
         };
 
         dispatch(
@@ -199,7 +201,13 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
         setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, props.data?.collections]
+    [
+      dispatch,
+      formState.isValid,
+      getValues,
+      props.data?.collections,
+      props.data?.fakers,
+    ]
   );
 
   return (

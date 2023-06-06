@@ -4,6 +4,7 @@ import {
   ApiModel,
   CollectionModel,
   DbModel,
+  FakerContainerModel,
   ProjectModel,
 } from "../models/project";
 import { setProjects } from "src/utils";
@@ -20,12 +21,18 @@ interface UpdatePayloadInterface {
   data: ProjectModel;
   idx: number;
 }
-
 interface AddCollectionPayloadInterface {
   data: CollectionModel;
   projectId: number;
 }
-
+interface AddFakerPayloadInterface {
+  data: FakerContainerModel;
+  projectId: number;
+}
+interface RemoveFakerPayloadInterface {
+  projectId: number;
+  fakerId: number;
+}
 interface RemoveCollectionPayloadInterface {
   projectId: number;
   collectionId: number;
@@ -268,6 +275,38 @@ export const projectSlice = createSlice({
         console.log(err);
       });
     },
+    addFaker(state, { payload }: { payload: AddFakerPayloadInterface }) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+          tempProj.fakers.push(payload.data);
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    removeFaker(state, { payload }: { payload: RemoveFakerPayloadInterface }) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+          tempProj.fakers = tempProj.fakers.filter(
+            (_col, idx) => idx !== payload.fakerId
+          );
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
   },
 });
 
@@ -283,6 +322,8 @@ export const {
   updateTest,
   removeTest,
   refreshCollection,
+  addFaker,
+  removeFaker,
 } = projectSlice.actions;
 
 export const selectProject = (state: RootState) => state.project.value;

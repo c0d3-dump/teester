@@ -46,6 +46,7 @@ import {
 } from "src/utils";
 import { addTester, clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
+import FakerComponent from "./Faker";
 
 export default function Collection() {
   const projects = useAppSelector(selectProject);
@@ -175,6 +176,11 @@ export default function Collection() {
         </Accordion>
       </div>
 
+      <FakerComponent
+        projectId={projectId}
+        config={projects[projectId].config}
+        fakers={projects[projectId].fakers}
+      ></FakerComponent>
       <AddEditCollectionComponent
         type="RUN"
         collectionList={projects[projectId].collections}
