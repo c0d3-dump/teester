@@ -5,6 +5,7 @@ import {
   CollectionModel,
   DbModel,
   FakerContainerModel,
+  FakerModel,
   ProjectModel,
 } from "../models/project";
 import { setProjects } from "src/utils";
@@ -32,6 +33,11 @@ interface AddFakerPayloadInterface {
 interface RemoveFakerPayloadInterface {
   projectId: number;
   fakerId: number;
+}
+interface UpdateFakerPayloadInterface {
+  projectId: number;
+  fakerId: number;
+  data: FakerModel[];
 }
 interface RemoveCollectionPayloadInterface {
   projectId: number;
@@ -307,6 +313,28 @@ export const projectSlice = createSlice({
         console.log(err);
       });
     },
+    updateFaker(state, { payload }: { payload: UpdateFakerPayloadInterface }) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+
+          tempProj.fakers = tempProj.fakers.map((col, jdx) => {
+            if (jdx === payload.fakerId) {
+              return { name: col.name, data: payload.data };
+            } else {
+              return col;
+            }
+          });
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
   },
 });
 
@@ -324,6 +352,7 @@ export const {
   refreshCollection,
   addFaker,
   removeFaker,
+  updateFaker,
 } = projectSlice.actions;
 
 export const selectProject = (state: RootState) => state.project.value;

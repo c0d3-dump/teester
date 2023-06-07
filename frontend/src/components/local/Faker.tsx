@@ -76,7 +76,7 @@ export default function FakerComponent(props: FakerComponentProps) {
 
         <ScrollArea className="h-[90%]">
           {props.fakers.map((faker, idx) => (
-            <Card className="my-auto flex justify-between mb-4">
+            <Card className="my-auto flex justify-between mb-4" key={idx}>
               <CardHeader className="w-full rounded-lg">
                 <CardTitle>{faker.name}</CardTitle>
               </CardHeader>
@@ -85,6 +85,7 @@ export default function FakerComponent(props: FakerComponentProps) {
                 <FillFakerComponent
                   projectId={props.projectId}
                   faker={faker}
+                  fakerId={idx}
                 ></FillFakerComponent>
 
                 <AlertDialog>

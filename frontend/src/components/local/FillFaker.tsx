@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Edit, Plus, Trash2, X } from "lucide-react";
+import { Edit, Plus, Save, Trash2, X } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
@@ -18,15 +18,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { ScrollArea } from "../ui/scroll-area";
+import { useAppDispatch } from "src/redux/base/hooks";
+import { updateFaker } from "src/redux/reducers/project";
 
 interface FillFakerComponentProps {
   projectId: number;
+  fakerId: number;
   faker: FakerContainerModel;
 }
 
 export default function FillFakerComponent(props: FillFakerComponentProps) {
   const [dialogState, setDialogState] = useState(false);
   const [fakerList, setFakerList] = useState<FakerModel[]>([]);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    setFakerList(props.faker.data);
+  }, [props.faker.data]);
+
+  const updateFakerData = useCallback(
+    (fakerData: FakerModel[]) => {
+      dispatch(
+        updateFaker({
+          projectId: props.projectId,
+          fakerId: props.fakerId,
+          data: fakerData,
+        })
+      );
+    },
+    [dispatch, props.fakerId, props.projectId]
+  );
 
   const onDeleteClicked = useCallback(
     (idx: number) => {
@@ -82,54 +104,73 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
           <DialogTitle>Fill Faker</DialogTitle>
         </DialogHeader>
 
-        {fakerList?.map((faker, idx) => (
-          <Card
-            className={`my-auto flex justify-between mb-4 rounded-none`}
-            key={idx}
-          >
-            <CardHeader className="flex gap-2 w-full">
-              <Input
-                value={faker.fieldName}
-                type="text"
-                onChange={(event) =>
-                  onFakerDataChange(idx, { fieldName: event.target.value })
-                }
-              ></Input>
+        <ScrollArea className="h-[90%]">
+          {fakerList?.map((faker, idx) => (
+            <Card
+              className={`my-auto flex justify-between mb-4 rounded-none`}
+              key={idx}
+            >
+              <CardHeader className="flex gap-2 w-full">
+                <Input
+                  value={faker.fieldName}
+                  type="text"
+                  onChange={(event) =>
+                    onFakerDataChange(idx, { fieldName: event.target.value })
+                  }
+                ></Input>
 
-              <Select
-                value={faker.type}
-                onValueChange={(event) =>
-                  onFakerDataChange(idx, { type: event })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Fruits</SelectLabel>
-                    <SelectItem value="apple">Apple</SelectItem>
-                    <SelectItem value="banana">Banana</SelectItem>
-                    <SelectItem value="blueberry">Blueberry</SelectItem>
-                    <SelectItem value="grapes">Grapes</SelectItem>
-                    <SelectItem value="pineapple">Pineapple</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </CardHeader>
+                <Select
+                  value={faker.type}
+                  onValueChange={(event) =>
+                    onFakerDataChange(idx, { type: event })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Fruits</SelectLabel>
+                      <SelectItem value="apple">Apple</SelectItem>
+                      <SelectItem value="banana">Banana</SelectItem>
+                      <SelectItem value="blueberry">Blueberry</SelectItem>
+                      <SelectItem value="grapes">Grapes</SelectItem>
+                      <SelectItem value="pineapple">Pineapple</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
 
-            <div className="flex align-middle">
-              <Button
-                size="xs"
-                variant="secondary"
-                className="p-2 my-auto mx-2"
-                onClick={() => onDeleteClicked(idx)}
-              >
-                <Trash2></Trash2>
-              </Button>
-            </div>
-          </Card>
-        ))}
+                <Input
+                  value={faker.constraints}
+                  type="text"
+                  onChange={(event) =>
+                    onFakerDataChange(idx, { constraints: event.target.value })
+                  }
+                ></Input>
+              </CardHeader>
+
+              <div className="flex align-middle">
+                <Button
+                  size="xs"
+                  variant="secondary"
+                  className="p-2 my-auto mx-2"
+                  onClick={() => updateFakerData(fakerList)}
+                >
+                  <Save></Save>
+                </Button>
+
+                <Button
+                  size="xs"
+                  variant="secondary"
+                  className="p-2 my-auto mx-2"
+                  onClick={() => onDeleteClicked(idx)}
+                >
+                  <Trash2></Trash2>
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </ScrollArea>
 
         <Button
           className="absolute right-[24px] bottom-[24px] z-100 p-4"
