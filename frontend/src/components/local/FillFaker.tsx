@@ -28,9 +28,14 @@ interface FillFakerComponentProps {
   faker: FakerContainerModel;
 }
 
+type NumberBooleanMap = {
+  [key: number]: boolean;
+};
+
 export default function FillFakerComponent(props: FillFakerComponentProps) {
   const [dialogState, setDialogState] = useState(false);
   const [fakerList, setFakerList] = useState<FakerModel[]>([]);
+  const [dirtyList, setDirtyList] = useState<NumberBooleanMap>({});
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -46,6 +51,7 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
           data: fakerData,
         })
       );
+      setDirtyList({});
     },
     [dispatch, props.fakerId, props.projectId]
   );
@@ -53,8 +59,9 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
   const onDeleteClicked = useCallback(
     (idx: number) => {
       setFakerList([...fakerList.filter((_, id) => id !== idx)]);
+      updateFakerData(fakerList);
     },
-    [fakerList]
+    [fakerList, updateFakerData]
   );
 
   const onAddClick = useCallback(() => {
@@ -75,8 +82,13 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
           idx === fakerId ? { ...fak, ...data } : fak
         ),
       ]);
+
+      setDirtyList({
+        ...dirtyList,
+        [fakerId]: true,
+      });
     },
-    [fakerList]
+    [dirtyList, fakerList]
   );
 
   return (
@@ -151,6 +163,7 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
 
               <div className="flex align-middle">
                 <Button
+                  disabled={!dirtyList[idx]}
                   size="xs"
                   variant="secondary"
                   className="p-2 my-auto mx-2"
