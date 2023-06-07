@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Play, Plus, Sparkles, Trash2, X } from "lucide-react";
 
 import {
   Dialog,
@@ -31,6 +31,7 @@ import { useForm } from "react-hook-form";
 import { addFaker, removeFaker } from "src/redux/reducers/project";
 import FillFakerComponent from "./FillFaker";
 import { ScrollArea } from "../ui/scroll-area";
+import { generateSql } from "src/utils";
 
 interface FakerComponentProps {
   projectId: number;
@@ -47,6 +48,16 @@ export default function FakerComponent(props: FakerComponentProps) {
       dispatch(removeFaker({ projectId: props.projectId, fakerId: idx }));
     },
     [dispatch, props.projectId]
+  );
+
+  const runFaker = useCallback(
+    (fakerId: number) => {
+      const faker = props.fakers[fakerId];
+      const sqlString = generateSql(faker.name, faker.data);
+
+      console.log(sqlString);
+    },
+    [props.fakers]
   );
 
   return (
@@ -82,6 +93,15 @@ export default function FakerComponent(props: FakerComponentProps) {
               </CardHeader>
 
               <div className="flex align-middle">
+                <Button
+                  className="p-2 my-auto mx-2"
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => runFaker(idx)}
+                >
+                  <Play color="lightgreen"></Play>
+                </Button>
+
                 <FillFakerComponent
                   projectId={props.projectId}
                   faker={faker}

@@ -2,7 +2,8 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import axios from "axios";
 import { env } from "./config";
-import { DbModel, ProjectModel } from "./redux/models/project";
+import { DbModel, FakerModel, ProjectModel } from "./redux/models/project";
+import { FakerType } from "./redux/models/project";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -132,4 +133,27 @@ export const extractVariables = (targetObj: any, templateObj: any) => {
 export const replaceTokens = (data: string, tokens: any) => {
   const regex = /\$\{(.*?)\}/g;
   return data.replace(regex, (_, match) => tokens[match]);
+};
+
+export const generateSql = (tableName: string, data: FakerModel[]) => {
+  let sql = `INSERT INTO ${tableName}(`;
+
+  const columns = data.map((d) => d.fieldName);
+  const columnValues = data.map((d) => d.type);
+
+  sql += columns.join(",");
+  sql += ") VALUES (";
+
+  // TODO: generate new fake data here
+  sql += columnValues.map((cn) => generateFakeData(cn)).join(",");
+
+  return sql + ");";
+};
+
+export const generateFakeData = (name: string) => {
+  const data = FakerType.find((fk) => fk.name === name)?.gen();
+  if (typeof data === "string") {
+    return `"${data}"`;
+  }
+  return data;
 };

@@ -6,7 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "../ui/button";
-import { FakerContainerModel, FakerModel } from "src/redux/models/project";
+import {
+  FakerContainerModel,
+  FakerModel,
+  FakerType,
+} from "src/redux/models/project";
 import { Card, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
 import {
@@ -14,7 +18,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
@@ -142,12 +145,11 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>Fruits</SelectLabel>
-                      <SelectItem value="apple">Apple</SelectItem>
-                      <SelectItem value="banana">Banana</SelectItem>
-                      <SelectItem value="blueberry">Blueberry</SelectItem>
-                      <SelectItem value="grapes">Grapes</SelectItem>
-                      <SelectItem value="pineapple">Pineapple</SelectItem>
+                      {FakerType.map((ft, f_idx) => (
+                        <SelectItem value={ft.name} key={f_idx}>
+                          {ft.name}
+                        </SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -163,16 +165,6 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
 
               <div className="flex align-middle">
                 <Button
-                  disabled={!dirtyList[idx]}
-                  size="xs"
-                  variant="secondary"
-                  className="p-2 my-auto mx-2"
-                  onClick={() => updateFakerData(fakerList)}
-                >
-                  <Save></Save>
-                </Button>
-
-                <Button
                   size="xs"
                   variant="secondary"
                   className="p-2 my-auto mx-2"
@@ -184,6 +176,16 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
             </Card>
           ))}
         </ScrollArea>
+
+        <Button
+          disabled={Object.keys(dirtyList).length < 1}
+          size="xs"
+          variant="secondary"
+          className="absolute right-[24px] bottom-[96px] z-100 p-4"
+          onClick={() => updateFakerData(fakerList)}
+        >
+          <Save color="lightgreen"></Save>
+        </Button>
 
         <Button
           className="absolute right-[24px] bottom-[24px] z-100 p-4"
