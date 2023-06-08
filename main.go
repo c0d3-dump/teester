@@ -140,13 +140,55 @@ func main() {
 
 		defer db.Close()
 
-		_, err = db.Exec(body.Query)
+		var rows *sql.Rows
+		rows, err = db.Query(body.Query)
 		if err != nil {
 			fmt.Println(err)
+			return c.String(http.StatusBadRequest, err.Error())
+		}
+
+		data := make([]map[string]interface{}, 0)
+
+		columns, err := rows.Columns()
+		if err != nil {
 			return c.String(http.StatusBadRequest, "")
 		}
 
-		return c.String(http.StatusOK, "")
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+
+		for rows.Next() {
+			for i := range columns {
+				valuePtrs[i] = &values[i]
+			}
+
+			if err := rows.Scan(valuePtrs...); err != nil {
+				return c.String(http.StatusBadRequest, "")
+			}
+
+			entry := make(map[string]interface{})
+			for i, column := range columns {
+				var v interface{}
+				val := values[i]
+
+				b, ok := val.([]byte)
+				if ok {
+					v = string(b)
+				} else {
+					v = val
+				}
+
+				entry[column] = v
+			}
+
+			data = append(data, entry)
+		}
+
+		if err := rows.Err(); err != nil {
+			return c.String(http.StatusBadRequest, "")
+		}
+
+		return c.JSON(http.StatusOK, data)
 	})
 
 	log.Fatal(app.Start(":3333"))

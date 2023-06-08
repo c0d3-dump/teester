@@ -31,7 +31,8 @@ import { useForm } from "react-hook-form";
 import { addFaker, removeFaker } from "src/redux/reducers/project";
 import FillFakerComponent from "./FillFaker";
 import { ScrollArea } from "../ui/scroll-area";
-import { generateSql } from "src/utils";
+import { generateSql, runQuery } from "src/utils";
+import { config } from "process";
 
 interface FakerComponentProps {
   projectId: number;
@@ -51,13 +52,12 @@ export default function FakerComponent(props: FakerComponentProps) {
   );
 
   const runFaker = useCallback(
-    (fakerId: number) => {
+    async (fakerId: number) => {
       const faker = props.fakers[fakerId];
-      const sqlString = generateSql(faker.name, faker.data);
-
-      console.log(sqlString);
+      const sqlString = await generateSql(props.config, faker.name, faker.data);
+      await runQuery(props.config, sqlString);
     },
-    [props.fakers]
+    [props.config, props.fakers]
   );
 
   return (

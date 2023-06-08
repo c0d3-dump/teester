@@ -134,7 +134,7 @@ export default function Collection() {
           let assertValue = false;
           try {
             const dbModel = test as DbModel;
-            await runQuery(config.dbType, config.dbUrl, dbModel);
+            await runQuery(config, dbModel.query);
             assertValue = true;
           } catch (error) {
             console.log("Something went wrong with db");

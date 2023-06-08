@@ -2,7 +2,12 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import axios from "axios";
 import { env } from "./config";
-import { DbModel, FakerModel, ProjectModel } from "./redux/models/project";
+import {
+  ConfigModel,
+  DbModel,
+  FakerModel,
+  ProjectModel,
+} from "./redux/models/project";
 import { FakerType } from "./redux/models/project";
 
 export function cn(...inputs: ClassValue[]) {
@@ -77,15 +82,11 @@ export const runApi = async (host: string, apiModel: any) => {
   };
 };
 
-export const runQuery = async (
-  dbType: string,
-  dbUrl: string,
-  dbModel: DbModel
-) => {
+export const runQuery = async (config: ConfigModel, query: string) => {
   return axios.post(`${env.SERVER_URL}/db-query`, {
-    dbType,
-    dbUrl,
-    query: dbModel.query,
+    dbType: config.dbType,
+    dbUrl: config.dbUrl,
+    query,
   });
 };
 
@@ -135,25 +136,58 @@ export const replaceTokens = (data: string, tokens: any) => {
   return data.replace(regex, (_, match) => tokens[match]);
 };
 
-export const generateSql = (tableName: string, data: FakerModel[]) => {
+export const generateSql = async (
+  config: ConfigModel,
+  tableName: string,
+  data: FakerModel[]
+) => {
   let sql = `INSERT INTO ${tableName}(`;
 
   const columns = data.map((d) => d.fieldName);
-  const columnValues = data.map((d) => d.type);
+  const columnValues = data.map((d) => ({
+    type: d.type,
+    constraints: d.constraints,
+  }));
 
   sql += columns.join(",");
   sql += ") VALUES (";
 
-  // TODO: generate new fake data here
-  sql += columnValues.map((cn) => generateFakeData(cn)).join(",");
+  const columnPromiseList = columnValues.map((cn) =>
+    generateFakeData(config, cn.type, cn.constraints)
+  );
+
+  sql += (await Promise.all(columnPromiseList)).join(",");
 
   return sql + ");";
 };
 
-export const generateFakeData = (name: string) => {
-  const data = FakerType.find((fk) => fk.name === name)?.gen();
+export const generateFakeData = async (
+  config: ConfigModel,
+  type: string,
+  constraints: string
+) => {
+  let data;
+  if (constraints?.split(",").length === 2) {
+    const cons = constraints?.split(",");
+    const res = await getTableData(config, cons[0], cons[1]);
+
+    const randomIndex = Math.floor(Math.random() * res.data.length);
+    data = res.data[randomIndex][cons[1]];
+  } else {
+    data = FakerType.find((fk) => fk.name === type)?.gen();
+  }
   if (typeof data === "string") {
     return `"${data}"`;
   }
   return data;
+};
+
+export const getTableData = async (
+  config: ConfigModel,
+  tableName: string,
+  columnName: string
+) => {
+  const sql = `SELECT ${columnName.trim()} FROM ${tableName.trim()};`;
+
+  return runQuery(config, sql);
 };
