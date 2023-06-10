@@ -7,10 +7,14 @@ import { ProjectModel } from "./redux/models/project";
 import { setProject } from "./redux/reducers/project";
 import { getProjects } from "./utils";
 import { useAppDispatch } from "./redux/base/hooks";
+import axios from "axios";
+import { useToast } from "./components/ui/use-toast";
+import { Toaster } from "./components/ui/toaster";
 
 function App() {
   const dispatch = useAppDispatch();
   const [isLoading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   const router = createBrowserRouter([
     {
@@ -35,14 +39,34 @@ function App() {
       });
   }, [dispatch]);
 
+  useEffect(() => {
+    axios.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      (error) => {
+        toast({
+          description: error.response.data,
+          duration: 1000,
+          variant: "destructive",
+        });
+
+        return Promise.reject();
+      }
+    );
+  }, [toast]);
+
   return (
-    <div className="container">
-      {isLoading ? (
-        <div></div>
-      ) : (
-        <RouterProvider router={router}></RouterProvider>
-      )}
-    </div>
+    <>
+      <div className="container">
+        {isLoading ? (
+          <div></div>
+        ) : (
+          <RouterProvider router={router}></RouterProvider>
+        )}
+      </div>
+      <Toaster></Toaster>
+    </>
   );
 }
 

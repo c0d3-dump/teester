@@ -66,6 +66,7 @@ export const FakerType = [
   { name: "companyName", gen: () => faker.company.name() },
   { name: "boolean", gen: () => faker.datatype.boolean() },
   { name: "int", gen: () => faker.number.int() },
+  { name: "age", gen: () => faker.number.int({ min: 1, max: 100 }) },
   { name: "float", gen: () => faker.number.float() },
   { name: "date", gen: () => faker.date.anytime() },
   { name: "gender", gen: () => faker.person.gender() },

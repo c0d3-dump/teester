@@ -86,7 +86,7 @@ func main() {
 	app.GET("/getData", func(c echo.Context) error {
 		data, err := readJson(dataFileName)
 		if err != nil {
-			return c.String(http.StatusBadRequest, "")
+			return c.String(http.StatusBadRequest, err.Error())
 		}
 
 		var jsonStruct []map[string]interface{}
@@ -100,13 +100,13 @@ func main() {
 		err := c.Bind(body)
 		if err != nil {
 			fmt.Println(err)
-			return c.String(http.StatusBadRequest, "")
+			return c.String(http.StatusBadRequest, err.Error())
 		}
 
 		err = writeJson(dataFileName, body.Data)
 		if err != nil {
 			fmt.Println(err)
-			return c.String(http.StatusBadRequest, "")
+			return c.String(http.StatusBadRequest, err.Error())
 		}
 		return c.String(http.StatusCreated, "")
 	})
@@ -118,7 +118,7 @@ func main() {
 		err = c.Bind(body)
 		if err != nil {
 			fmt.Println(err)
-			return c.String(http.StatusBadRequest, "")
+			return c.String(http.StatusBadRequest, err.Error())
 		}
 
 		var db *sql.DB
@@ -128,13 +128,13 @@ func main() {
 			db, err = sql.Open("mysql", body.DbUrl)
 			if err != nil {
 				fmt.Println(err)
-				return c.String(http.StatusBadRequest, "")
+				return c.String(http.StatusBadRequest, err.Error())
 			}
 		case "SQLITE":
 			db, err = sql.Open("sqlite", body.DbUrl)
 			if err != nil {
 				fmt.Println(err)
-				return c.String(http.StatusBadRequest, "")
+				return c.String(http.StatusBadRequest, err.Error())
 			}
 		}
 
@@ -151,7 +151,7 @@ func main() {
 
 		columns, err := rows.Columns()
 		if err != nil {
-			return c.String(http.StatusBadRequest, "")
+			return c.String(http.StatusBadRequest, err.Error())
 		}
 
 		values := make([]interface{}, len(columns))
@@ -163,7 +163,7 @@ func main() {
 			}
 
 			if err := rows.Scan(valuePtrs...); err != nil {
-				return c.String(http.StatusBadRequest, "")
+				return c.String(http.StatusBadRequest, err.Error())
 			}
 
 			entry := make(map[string]interface{})
@@ -185,7 +185,7 @@ func main() {
 		}
 
 		if err := rows.Err(); err != nil {
-			return c.String(http.StatusBadRequest, "")
+			return c.String(http.StatusBadRequest, err.Error())
 		}
 
 		return c.JSON(http.StatusOK, data)

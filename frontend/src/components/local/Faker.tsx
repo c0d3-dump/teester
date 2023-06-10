@@ -32,6 +32,7 @@ import { addFaker, removeFaker } from "src/redux/reducers/project";
 import FillFakerComponent from "./FillFaker";
 import { ScrollArea } from "../ui/scroll-area";
 import { generateSql, runQuery } from "src/utils";
+import { useToast } from "../ui/use-toast";
 
 interface FakerComponentProps {
   projectId: number;
@@ -42,6 +43,7 @@ interface FakerComponentProps {
 export default function FakerComponent(props: FakerComponentProps) {
   const [dialogState, setDialogState] = useState(false);
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
 
   const onDeleteClicked = useCallback(
     (idx: number) => {
@@ -52,11 +54,21 @@ export default function FakerComponent(props: FakerComponentProps) {
 
   const runFaker = useCallback(
     async (fakerId: number) => {
-      const faker = props.fakers[fakerId];
-      const sqlString = await generateSql(props.config, faker.name, faker.data);
-      await runQuery(props.config, sqlString);
+      try {
+        const faker = props.fakers[fakerId];
+        const sqlString = await generateSql(
+          props.config,
+          faker.name,
+          faker.data
+        );
+        await runQuery(props.config, sqlString);
+        toast({
+          description: "Fake data genarated successfully",
+          duration: 1000,
+        });
+      } catch (err) {}
     },
-    [props.config, props.fakers]
+    [props.config, props.fakers, toast]
   );
 
   return (
