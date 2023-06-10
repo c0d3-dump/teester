@@ -13,14 +13,7 @@ import {
 } from "src/redux/models/project";
 import { Card, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import Select from "react-select";
 import { ScrollArea } from "../ui/scroll-area";
 import { useAppDispatch } from "src/redux/base/hooks";
 import { updateFaker } from "src/redux/reducers/project";
@@ -94,6 +87,13 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
     [dirtyList, fakerList]
   );
 
+  const fakerTypeOptions = useCallback(() => {
+    return FakerType.map((fk) => ({
+      value: fk.name,
+      label: fk.name,
+    }));
+  }, []);
+
   return (
     <Dialog open={dialogState}>
       <Button
@@ -135,24 +135,26 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
                 ></Input>
 
                 <Select
-                  value={faker.type}
-                  onValueChange={(event) =>
-                    onFakerDataChange(idx, { type: event })
+                  className="w-full"
+                  theme={(theme) => ({
+                    ...theme,
+                    borderRadius: 4,
+                    colors: {
+                      ...theme.colors,
+                      primary: "#1d283a",
+                      neutral0: "#030711",
+                      primary25: "#0d1324",
+                      neutral20: "#1d283a",
+                      neutral30: "#1d283a",
+                    },
+                  })}
+                  value={{ value: faker.type, label: faker.type }}
+                  onChange={(event) =>
+                    onFakerDataChange(idx, { type: event?.value })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {FakerType.map((ft, f_idx) => (
-                        <SelectItem value={ft.name} key={f_idx}>
-                          {ft.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                  options={fakerTypeOptions()}
+                  isSearchable={true}
+                ></Select>
 
                 <Input
                   value={faker.constraints}

@@ -32,7 +32,6 @@ import { addFaker, removeFaker } from "src/redux/reducers/project";
 import FillFakerComponent from "./FillFaker";
 import { ScrollArea } from "../ui/scroll-area";
 import { generateSql, runQuery } from "src/utils";
-import { config } from "process";
 
 interface FakerComponentProps {
   projectId: number;

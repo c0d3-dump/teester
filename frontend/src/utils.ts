@@ -2,12 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import axios from "axios";
 import { env } from "./config";
-import {
-  ConfigModel,
-  DbModel,
-  FakerModel,
-  ProjectModel,
-} from "./redux/models/project";
+import { ConfigModel, FakerModel, ProjectModel } from "./redux/models/project";
 import { FakerType } from "./redux/models/project";
 
 export function cn(...inputs: ClassValue[]) {
