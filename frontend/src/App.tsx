@@ -8,13 +8,12 @@ import { setProject } from "./redux/reducers/project";
 import { getProjects } from "./utils";
 import { useAppDispatch } from "./redux/base/hooks";
 import axios from "axios";
-import { useToast } from "./components/ui/use-toast";
-import { Toaster } from "./components/ui/toaster";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const dispatch = useAppDispatch();
   const [isLoading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   const router = createBrowserRouter([
     {
@@ -45,16 +44,11 @@ function App() {
         return response;
       },
       (error) => {
-        toast({
-          description: error.response.data,
-          duration: 1000,
-          variant: "destructive",
-        });
-
+        toast.error(error.response.data);
         return Promise.reject();
       }
     );
-  }, [toast]);
+  }, []);
 
   return (
     <>
@@ -65,7 +59,12 @@ function App() {
           <RouterProvider router={router}></RouterProvider>
         )}
       </div>
-      <Toaster></Toaster>
+      <ToastContainer
+        autoClose={1000}
+        position="bottom-center"
+        hideProgressBar={true}
+        theme="dark"
+      ></ToastContainer>
     </>
   );
 }
