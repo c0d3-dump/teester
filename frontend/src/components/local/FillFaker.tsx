@@ -54,8 +54,9 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
 
   const onDeleteClicked = useCallback(
     (idx: number) => {
-      setFakerList([...fakerList.filter((_, id) => id !== idx)]);
-      updateFakerData(fakerList);
+      const updatedFakerList = [...fakerList.filter((_, id) => id !== idx)];
+      setFakerList(updatedFakerList);
+      updateFakerData(updatedFakerList);
     },
     [fakerList, updateFakerData]
   );
