@@ -226,9 +226,7 @@ export default function TestComponent(props: TestsProps) {
           const dbModel = test as DbModel;
           await runQuery(config, dbModel.query);
           assertValue = true;
-        } catch (error) {
-          console.log("Something went wrong with db");
-        }
+        } catch (_error) {}
 
         dispatch(
           addTester({

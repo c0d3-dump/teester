@@ -5,9 +5,24 @@ import { store } from "./redux/base/store";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import "./index.css";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const container = document.getElementById("root")!;
 const root = createRoot(container);
+
+console.log("here?");
+
+axios.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.log(error);
+    toast.error("something went wrong");
+    return Promise.reject(error);
+  }
+);
 
 root.render(
   <React.StrictMode>

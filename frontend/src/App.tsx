@@ -7,8 +7,7 @@ import { ProjectModel } from "./redux/models/project";
 import { setProject } from "./redux/reducers/project";
 import { getProjects } from "./utils";
 import { useAppDispatch } from "./redux/base/hooks";
-import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
@@ -37,18 +36,6 @@ function App() {
         console.log(err);
       });
   }, [dispatch]);
-
-  useEffect(() => {
-    axios.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      (error) => {
-        toast.error(error.response.data);
-        return Promise.reject();
-      }
-    );
-  }, []);
 
   return (
     <>

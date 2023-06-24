@@ -62,12 +62,12 @@ export const runApi = async (host: string, apiModel: any) => {
         break;
     }
   } catch (error: any) {
-    if (!error.response) {
+    if (!error?.response) {
       status = -1;
       data = "";
     } else {
-      status = error.response.status;
-      data = error.response.data;
+      status = error?.response?.status;
+      data = error?.response?.data;
     }
   }
 
@@ -167,7 +167,7 @@ export const generateFakeData = async (
     const res = await getTableData(config, cons[0], cons[1]);
 
     const randomIndex = Math.floor(Math.random() * res.data.length);
-    data = res.data[randomIndex][cons[1]];
+    data = res?.data?.[randomIndex]?.[cons[1]];
   } else {
     data = FakerType.find((fk) => fk.name === type)?.gen();
   }
