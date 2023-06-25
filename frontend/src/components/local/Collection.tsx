@@ -344,7 +344,7 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
               Collection
             </Label>
             <Select onValueChange={(val) => setSelectedCollection(val)}>
-              <SelectTrigger className="w-[278px]" id="collection">
+              <SelectTrigger className="col-span-3" id="collection">
                 <SelectValue placeholder="Select a collection" />
               </SelectTrigger>
               <SelectContent>

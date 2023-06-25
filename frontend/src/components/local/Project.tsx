@@ -229,7 +229,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
         )}
       </Button>
 
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[95%] overflow-y-scroll">
         <DialogPrimitive.Close
           onClick={() => setDialogState(false)}
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
@@ -278,7 +278,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
             </Label>
             <select
               {...register("dbType", { required: true })}
-              className="h-10 w-[278px] items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-10 col-span-3 items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="SQLITE">SQLITE</option>
               <option value="MYSQL">MYSQL</option>
