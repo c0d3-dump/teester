@@ -141,6 +141,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
       setValue("dbType", props.data?.config.dbType);
       setValue("dbUrl", props.data?.config.dbUrl);
       setValue("header", props.data?.config.header);
+      setValue("withCredentials", props.data?.config.withCredentials);
     }
   }, [props.data, props.type, setValue]);
 
@@ -159,6 +160,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
             dbType: formData.dbType,
             dbUrl: formData.dbUrl,
             header: formData.header,
+            withCredentials: formData.withCredentials,
           },
           collections: [],
           fakers: [],
@@ -186,6 +188,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
             dbType: formData.dbType,
             dbUrl: formData.dbUrl,
             header: formData.header,
+            withCredentials: formData.withCredentials,
           },
           collections: props.data?.collections ?? [],
           fakers: props.data?.fakers ?? [],
@@ -293,6 +296,17 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
               id="dbUrl"
               type="text"
               className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="withCredentials" className="text-right">
+              With Credentials
+            </Label>
+            <input
+              {...register("withCredentials")}
+              id="withCredentials"
+              type="checkbox"
+              className="col-span-3 "
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">

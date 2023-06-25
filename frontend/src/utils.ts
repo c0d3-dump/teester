@@ -19,7 +19,11 @@ export const getProjects = () => {
   return axios.get(`${env.SERVER_URL}/getData`);
 };
 
-export const runApi = async (host: string, apiModel: any) => {
+export const runApi = async (
+  host: string,
+  apiModel: any,
+  withCredentials: boolean
+) => {
   let status: number = -1;
   let data: string = "";
   let res: any;
@@ -30,7 +34,7 @@ export const runApi = async (host: string, apiModel: any) => {
         res = await axios.get(host + apiModel.endpoint, {
           headers: apiModel.header,
           params: apiModel.body,
-          withCredentials: true,
+          withCredentials,
         });
         status = res.status;
         data = res.data;
@@ -38,7 +42,7 @@ export const runApi = async (host: string, apiModel: any) => {
       case "POST":
         res = await axios.post(host + apiModel.endpoint, apiModel.body, {
           headers: apiModel.header,
-          withCredentials: true,
+          withCredentials,
         });
         status = res.status;
         data = res.data;
@@ -47,7 +51,7 @@ export const runApi = async (host: string, apiModel: any) => {
         res = await axios.delete(host + apiModel.endpoint, {
           headers: apiModel.header,
           data: apiModel.body,
-          withCredentials: true,
+          withCredentials,
         });
         status = res.status;
         data = res.data;
@@ -55,7 +59,7 @@ export const runApi = async (host: string, apiModel: any) => {
       case "PUT":
         res = await axios.put(host + apiModel.endpoint, apiModel.body, {
           headers: apiModel.header,
-          withCredentials: true,
+          withCredentials,
         });
         status = res.status;
         data = res.data;

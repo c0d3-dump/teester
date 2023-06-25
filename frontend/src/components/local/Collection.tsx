@@ -93,7 +93,11 @@ export default function Collection() {
             apiModel.body = {};
           }
 
-          const res = await runApi(config.host, apiModel);
+          const res = await runApi(
+            config.host,
+            apiModel,
+            config.withCredentials
+          );
 
           let assertValue = false;
           if (

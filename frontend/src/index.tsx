@@ -11,8 +11,6 @@ import { toast } from "react-toastify";
 const container = document.getElementById("root")!;
 const root = createRoot(container);
 
-console.log("here?");
-
 axios.interceptors.response.use(
   (response) => {
     return response;

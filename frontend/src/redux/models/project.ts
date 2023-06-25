@@ -12,6 +12,7 @@ export interface ConfigModel {
   dbType: string;
   dbUrl: string;
   header: string;
+  withCredentials: boolean;
 }
 
 export interface CollectionModel {
