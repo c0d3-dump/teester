@@ -164,7 +164,7 @@ export default function TestComponent(props: TestsProps) {
         const apiModel: any = { ...test };
 
         try {
-          const configHeader = JSON.parse(config.header);
+          const configHeader = JSON.parse(config.header ? config.header : "{}");
           const header = replaceTokens(apiModel.header, variables);
           apiModel.header = header ? JSON.parse(header) : {};
 

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Edit, X } from "lucide-react";
+import { Edit, X, ClipboardCopy, ClipboardPaste } from "lucide-react";
 
 import {
   Dialog,
@@ -23,6 +23,7 @@ import { addTest, updateTest } from "src/redux/reducers/project";
 import { Textarea } from "../ui/textarea";
 import { useParams } from "react-router-dom";
 import { clearTester } from "src/redux/reducers/tester";
+import { toast } from "react-toastify";
 
 interface AddEditTestComponentProps {
   type: "ADD" | "EDIT";
@@ -33,12 +34,37 @@ interface AddEditTestComponentProps {
 
 export default function AddEditTestComponent(props: AddEditTestComponentProps) {
   const [dialogState, setDialogState] = useState(false);
+  const [testData, setTestData] = useState<ApiModel | DbModel | undefined>();
 
-  const defaultValue = props.test
-    ? (props.test as ApiModel).methodType
+  useEffect(() => {
+    setTestData(props.test);
+  }, [props.test]);
+
+  const defaultValue = testData
+    ? (testData as ApiModel).methodType
       ? "Api"
       : "Database"
     : "Api";
+
+  const copyToClipboard = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(testData));
+      toast.success("Data copied to clipboard");
+    } catch (error) {
+      toast.error("Something went wrong!");
+    }
+  }, [testData]);
+
+  const pasteToClipboard = useCallback(async () => {
+    try {
+      const data = await navigator.clipboard.readText();
+      const parsedData = JSON.parse(data);
+      setTestData(parsedData);
+    } catch (error) {
+      toast.error("Something went wrong!");
+      setTestData(undefined);
+    }
+  }, []);
 
   return (
     <Dialog open={dialogState}>
@@ -67,6 +93,26 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
           </DialogTitle>
         </DialogHeader>
 
+        <div className="absolute left-8 top-4">
+          <Button
+            className=""
+            size="xs"
+            variant="default"
+            onClick={copyToClipboard}
+          >
+            <ClipboardCopy className="h-4 w-4"></ClipboardCopy>
+          </Button>
+
+          <Button
+            className="ml-2"
+            size="xs"
+            variant="default"
+            onClick={pasteToClipboard}
+          >
+            <ClipboardPaste className="h-4 w-4"></ClipboardPaste>
+          </Button>
+        </div>
+
         <Tabs defaultValue={defaultValue} className="sm:max-w-[846px] mt-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger
@@ -90,7 +136,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
                   collectionId={props.collectionId}
                   dialogState={dialogState}
                   setDialogState={setDialogState}
-                  test={props.test}
+                  test={testData}
                   testId={props.testId}
                 ></ApiTestComponent>
               </CardContent>
@@ -104,7 +150,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
                   collectionId={props.collectionId}
                   dialogState={dialogState}
                   setDialogState={setDialogState}
-                  test={props.test}
+                  test={testData}
                   testId={props.testId}
                 ></DbTestComponent>
               </CardContent>
@@ -132,7 +178,7 @@ function ApiTestComponent(props: TestComponentProps) {
   const projectId = parseInt(params.projectId ?? "-1");
 
   useEffect(() => {
-    if (props.type === "EDIT") {
+    if (props.type === "EDIT" || props.test) {
       const apiData = props.test as ApiModel;
       setValue("name", apiData.name);
       setValue("methodType", apiData.methodType);
@@ -302,7 +348,7 @@ function DbTestComponent(props: TestComponentProps) {
   const projectId = parseInt(params.projectId ?? "-1");
 
   useEffect(() => {
-    if (props.type === "EDIT") {
+    if (props.type === "EDIT" || props.test) {
       const dbData = props.test as DbModel;
       setValue("name", dbData.name);
       setValue("query", dbData.query);
