@@ -6,6 +6,8 @@
 
 - supports api and database for testing
 
+![collections](./examples/todo/screenshots/collection.png)
+
 ### how to run on linux
 
 - downlaod linux binary from [release](https://github.com/c0d3-dump/teester/releases) section
