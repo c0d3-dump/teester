@@ -1,0 +1,135 @@
+[
+  {
+    "collections": [
+      {
+        "name": "add todo",
+        "tests": [
+          {
+            "name": "login",
+            "endpoint": "/auth/login",
+            "methodType": "POST",
+            "body": "{\n  \"email\": \"test1@gmail.com\",\n  \"password\": \"1234\"\n}",
+            "assertion": {
+              "status": "200",
+              "body": "{\n  \"token\": \"@{token}\"\n}"
+            },
+            "header": ""
+          },
+          {
+            "name": "add todo",
+            "endpoint": "/api/todo/add",
+            "methodType": "POST",
+            "body": "{\n  \"title\": \"test for user 2\",\n  \"isCompleted\": \"0\"\n}",
+            "assertion": { "status": "200", "body": "" },
+            "header": "{\n  \"Authorization\": \"${token}\"\n}"
+          }
+        ]
+      },
+      {
+        "name": "delete todo",
+        "tests": [
+          {
+            "assertion": {
+              "body": "{\n  \"token\": \"@{token}\"\n}",
+              "status": "200"
+            },
+            "body": "{\n  \"email\": \"test1@gmail.com\",\n  \"password\": \"1234\"\n}",
+            "endpoint": "/auth/login",
+            "header": "",
+            "methodType": "POST",
+            "name": "login"
+          },
+          {
+            "name": "delete todo",
+            "endpoint": "/api/todo/delete",
+            "methodType": "POST",
+            "body": "{\n  \"id\": 2\n}",
+            "assertion": { "status": "200", "body": "" },
+            "header": "{\n  \"Authorization\": \"${token}\"\n}"
+          }
+        ]
+      },
+      {
+        "name": "update todo",
+        "tests": [
+          {
+            "assertion": {
+              "body": "{\n  \"token\": \"@{token}\"\n}",
+              "status": "200"
+            },
+            "body": "{\n  \"email\": \"test1@gmail.com\",\n  \"password\": \"1234\"\n}",
+            "endpoint": "/auth/login",
+            "header": "",
+            "methodType": "POST",
+            "name": "login"
+          },
+          {
+            "name": "add todo",
+            "endpoint": "/api/todo/update",
+            "methodType": "POST",
+            "body": "{\n  \"id\": 1,\n  \"title\": \"updated test title2\",\n  \"isCompleted\": \"1\"\n}",
+            "assertion": { "status": "200", "body": "" },
+            "header": "{\n  \"Authorization\": \"${token}\"\n}"
+          }
+        ]
+      },
+      {
+        "name": "get todo",
+        "tests": [
+          {
+            "name": "login",
+            "endpoint": "/auth/login",
+            "methodType": "POST",
+            "body": "{\n  \"email\": \"test1@gmail.com\",\n  \"password\": \"1234\"\n}",
+            "assertion": {
+              "status": "200",
+              "body": "{\n  \"token\": \"@{token}\"\n}"
+            },
+            "header": ""
+          },
+          {
+            "name": "get my todos",
+            "endpoint": "/api/todo/get",
+            "methodType": "POST",
+            "body": "",
+            "assertion": { "status": "200", "body": "" },
+            "header": "{\n  \"Authorization\": \"${token}\"\n}"
+          }
+        ]
+      },
+      {
+        "name": "admin",
+        "tests": [
+          {
+            "name": "login",
+            "endpoint": "/auth/login",
+            "methodType": "POST",
+            "body": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"1234\"\n}",
+            "assertion": {
+              "status": "200",
+              "body": "{\n  \"token\": \"@{token}\"\n}"
+            },
+            "header": ""
+          },
+          {
+            "name": "get all todos",
+            "endpoint": "/api/todo/get-all",
+            "methodType": "POST",
+            "body": "",
+            "assertion": { "status": "200", "body": "" },
+            "header": "{\n  \"Authorization\": \"${token}\"\n}"
+          }
+        ]
+      }
+    ],
+    "config": {
+      "dbType": "SQLITE",
+      "dbUrl": "test.db",
+      "header": "",
+      "host": "http://localhost:3456",
+      "withCredentials": false
+    },
+    "fakers": [],
+    "name": "todos"
+  }
+]
