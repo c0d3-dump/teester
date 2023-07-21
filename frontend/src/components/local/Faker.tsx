@@ -51,22 +51,6 @@ export default function FakerComponent(props: FakerComponentProps) {
     [dispatch, props.projectId]
   );
 
-  const runFaker = useCallback(
-    async (fakerId: number) => {
-      try {
-        const faker = props.fakers[fakerId];
-        const sqlString = await generateSql(
-          props.config,
-          faker.name,
-          faker.data
-        );
-        await runQuery(props.config, sqlString);
-        toast.success("Fake data genarated successfully");
-      } catch (err) {}
-    },
-    [props.config, props.fakers]
-  );
-
   return (
     <Dialog open={dialogState}>
       <Button
@@ -100,14 +84,11 @@ export default function FakerComponent(props: FakerComponentProps) {
               </CardHeader>
 
               <div className="flex align-middle">
-                <Button
-                  className="p-2 my-auto mx-2"
-                  size="xs"
-                  variant="ghost"
-                  onClick={() => runFaker(idx)}
-                >
-                  <Play color="lightgreen"></Play>
-                </Button>
+                <RunFakerComponent
+                  projectId={props.projectId}
+                  config={props.config}
+                  faker={props.fakers[idx]}
+                ></RunFakerComponent>
 
                 <FillFakerComponent
                   projectId={props.projectId}
@@ -224,6 +205,100 @@ function AddFakerComponent(props: AddFakerComponentProps) {
               {...register("name", { required: true })}
               id="name"
               type="text"
+              className="col-span-3"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="submit"
+              disabled={!formState.isValid || !formState.isDirty}
+            >
+              Submit
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface RunFakerComponentProps {
+  projectId: number;
+  config: ConfigModel;
+  faker: FakerContainerModel;
+}
+
+function RunFakerComponent(props: RunFakerComponentProps) {
+  const [dialogState, setDialogState] = useState(false);
+  const { register, formState, reset, getValues } = useForm();
+
+  useEffect(() => {
+    if (!dialogState) {
+      reset();
+    }
+  }, [dialogState, reset]);
+
+  const runFaker = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      try {
+        const formData = getValues();
+        const isValid = formState.isValid;
+
+        if (isValid) {
+          for (let index = 0; index < formData.count; index++) {
+            const faker = props.faker;
+            const sqlString = await generateSql(
+              props.config,
+              faker.name,
+              faker.data
+            );
+            await runQuery(props.config, sqlString);
+          }
+
+          setDialogState(false);
+          toast.success("Fake data genarated successfully");
+        }
+      } catch (err) {}
+    },
+    [formState.isValid, getValues, props.config, props.faker]
+  );
+
+  return (
+    <Dialog open={dialogState}>
+      <Button
+        className="p-2 my-auto mx-2"
+        size="xs"
+        variant="ghost"
+        onClick={() => setDialogState(true)}
+      >
+        <Play color="lightgreen"></Play>
+      </Button>
+
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogPrimitive.Close
+          onClick={() => setDialogState(false)}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+
+        <DialogHeader>
+          <DialogTitle>Run Faker</DialogTitle>
+        </DialogHeader>
+
+        <form className="grid gap-4 py-4" onSubmit={(e) => runFaker(e)}>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="count" className="text-right">
+              Count
+            </Label>
+            <Input
+              {...register("count", { required: true })}
+              id="count"
+              type="number"
               className="col-span-3"
             />
           </div>
