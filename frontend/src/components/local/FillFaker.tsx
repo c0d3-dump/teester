@@ -147,6 +147,7 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
                       primary25: "#0d1324",
                       neutral20: "#1d283a",
                       neutral30: "#1d283a",
+                      neutral80: "#ffffff",
                     },
                   })}
                   value={{ value: faker.type, label: faker.type }}

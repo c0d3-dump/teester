@@ -9,6 +9,8 @@ import (
 	"main/frontend"
 	"net/http"
 	"os"
+	"os/exec"
+	"runtime"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
@@ -55,6 +57,25 @@ func fileCheck(filename string) error {
 	}
 	conn.Close()
 	return nil
+}
+
+func openbrowser(url string) {
+	var err error
+
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 func main() {
@@ -191,5 +212,6 @@ func main() {
 		return c.JSON(http.StatusOK, data)
 	})
 
+	go openbrowser("http://localhost:3333")
 	log.Fatal(app.Start(":3333"))
 }

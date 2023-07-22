@@ -12,14 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import Select from "react-select";
 import { Button } from "../ui/button";
 import { Edit, Play, Plus, X } from "lucide-react";
 
@@ -350,22 +343,34 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
             <Label htmlFor="collection" className="text-right">
               Collection
             </Label>
-            <Select onValueChange={(val) => setSelectedCollection(val)}>
-              <SelectTrigger className="col-span-3" id="collection">
-                <SelectValue placeholder="Select a collection" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {props.collectionList?.map((col, idx) => {
-                    return (
-                      <SelectItem value={idx.toString()} key={idx}>
-                        {col.name}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <Select
+              className="col-span-3"
+              theme={(theme) => ({
+                ...theme,
+                borderRadius: 4,
+                colors: {
+                  ...theme.colors,
+                  primary: "#1d283a",
+                  neutral0: "#030711",
+                  primary25: "#0d1324",
+                  neutral20: "#1d283a",
+                  neutral30: "#1d283a",
+                  neutral80: "#ffffff",
+                },
+              })}
+              value={{
+                value: selectedCollection,
+                label: selectedCollection
+                  ? props.collectionList?.[parseInt(selectedCollection)].name
+                  : "",
+              }}
+              onChange={(event) => setSelectedCollection(event?.value ?? "")}
+              options={props.collectionList?.map((col, idx) => ({
+                value: idx.toString(),
+                label: col.name,
+              }))}
+              isSearchable={true}
+            ></Select>
           </div>
         ) : null}
 
