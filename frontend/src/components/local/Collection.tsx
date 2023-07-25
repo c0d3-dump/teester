@@ -40,6 +40,7 @@ import {
 import { addTester, clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
 import FakerComponent from "./Faker";
+import { setCollectionName } from "src/redux/reducers/app";
 
 export default function Collection() {
   const projects = useAppSelector(selectProject);
@@ -51,6 +52,10 @@ export default function Collection() {
     dispatch(clearTester());
     dispatch(removeCollection({ projectId, collectionId: idx }));
   };
+
+  useEffect(() => {
+    dispatch(setCollectionName(projects[projectId].name));
+  }, [dispatch, projectId, projects]);
 
   const runTests = useCallback(
     async (collectionId: number) => {
