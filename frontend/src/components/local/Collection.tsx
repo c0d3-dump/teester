@@ -12,7 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import Select from "react-select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Button } from "../ui/button";
 import { Edit, Play, Plus, X } from "lucide-react";
 
@@ -40,6 +47,7 @@ import {
 import { addTester, clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
 import FakerComponent from "./Faker";
+import { setCollectionName } from "src/redux/reducers/app";
 
 export default function Collection() {
   const projects = useAppSelector(selectProject);
@@ -51,6 +59,10 @@ export default function Collection() {
     dispatch(clearTester());
     dispatch(removeCollection({ projectId, collectionId: idx }));
   };
+
+  useEffect(() => {
+    dispatch(setCollectionName(projects[projectId].name));
+  }, [dispatch, projectId, projects]);
 
   const runTests = useCallback(
     async (collectionId: number) => {
@@ -343,34 +355,22 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
             <Label htmlFor="collection" className="text-right">
               Collection
             </Label>
-            <Select
-              className="col-span-3"
-              theme={(theme) => ({
-                ...theme,
-                borderRadius: 4,
-                colors: {
-                  ...theme.colors,
-                  primary: "#1d283a",
-                  neutral0: "#030711",
-                  primary25: "#0d1324",
-                  neutral20: "#1d283a",
-                  neutral30: "#1d283a",
-                  neutral80: "#ffffff",
-                },
-              })}
-              value={{
-                value: selectedCollection,
-                label: selectedCollection
-                  ? props.collectionList?.[parseInt(selectedCollection)].name
-                  : "",
-              }}
-              onChange={(event) => setSelectedCollection(event?.value ?? "")}
-              options={props.collectionList?.map((col, idx) => ({
-                value: idx.toString(),
-                label: col.name,
-              }))}
-              isSearchable={true}
-            ></Select>
+            <Select onValueChange={(val) => setSelectedCollection(val)}>
+              <SelectTrigger className="col-span-3" id="collection">
+                <SelectValue placeholder="Select a collection" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {props.collectionList?.map((col, idx) => {
+                    return (
+                      <SelectItem value={idx.toString()} key={idx}>
+                        {col.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         ) : null}
 

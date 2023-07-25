@@ -1,11 +1,13 @@
 import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
 import projectReducer from "../reducers/project";
 import selectedTester from "../reducers/tester";
+import selectedApp from '../reducers/app';
 
 export const store = configureStore({
   reducer: {
     project: projectReducer,
     tester: selectedTester,
+    app: selectedApp
   },
   devTools: true,
 });
