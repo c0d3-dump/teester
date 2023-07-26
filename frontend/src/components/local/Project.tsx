@@ -23,7 +23,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import {
@@ -34,6 +33,18 @@ import {
 } from "src/redux/reducers/project";
 import { useNavigate } from "react-router-dom";
 import { Textarea } from "../ui/textarea";
+import * as z from "zod";
+import { Switch } from "../ui/switch";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 export default function Project() {
   const dispatch = useAppDispatch();
@@ -125,32 +136,47 @@ interface AddEditProjectComponentProps {
 
 function AddEditProjectComponent(props: AddEditProjectComponentProps) {
   const [dialogState, setDialogState] = useState(false);
-  const { setValue, register, formState, getValues, reset } = useForm();
   const dispatch = useAppDispatch();
+
+  const formSchema = z.object({
+    name: z.string({ required_error: "Name is required" }).max(25),
+    host: z.string({ required_error: "Host is required" }).max(100),
+    dbType: z.string({ required_error: "Database type is required" }),
+    dbUrl: z.string({ required_error: "Databse url is required" }).max(100),
+    header: z.string().max(200).default("{}"),
+    withCredentials: z.boolean().default(false),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
 
   useEffect(() => {
     if (props.type === "ADD" && !dialogState) {
-      reset();
+      form.reset();
     }
-  }, [dialogState, props.type, reset]);
+  }, [dialogState, form, props.type]);
 
   useEffect(() => {
     if (props.type === "EDIT") {
-      setValue("name", props.data?.name);
-      setValue("host", props.data?.config.host);
-      setValue("dbType", props.data?.config.dbType);
-      setValue("dbUrl", props.data?.config.dbUrl);
-      setValue("header", props.data?.config.header);
-      setValue("withCredentials", props.data?.config.withCredentials);
+      form.setValue("name", props.data?.name ?? "");
+      form.setValue("host", props.data?.config.host ?? "");
+      form.setValue("dbType", props.data?.config.dbType ?? "SQLITE");
+      form.setValue("dbUrl", props.data?.config.dbUrl ?? "");
+      form.setValue("header", props.data?.config.header ?? "{}");
+      form.setValue(
+        "withCredentials",
+        props.data?.config.withCredentials ?? false
+      );
     }
-  }, [props.data, props.type, setValue]);
+  }, [form, props.data, props.type]);
 
   const onAddClick = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
         const newProject: ProjectModel = {
@@ -170,15 +196,15 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
         setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues]
+    [dispatch, form]
   );
 
   const onUpdateClicked = useCallback(
     (e: React.FormEvent<HTMLFormElement>, idx: number | undefined) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
         const updatedProject: ProjectModel = {
@@ -204,13 +230,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
         setDialogState(false);
       }
     },
-    [
-      dispatch,
-      formState.isValid,
-      getValues,
-      props.data?.collections,
-      props.data?.fakers,
-    ]
+    [dispatch, form, props.data?.collections, props.data?.fakers]
   );
 
   return (
@@ -247,88 +267,138 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <form
-          className="grid gap-4 py-4"
-          onSubmit={(e) =>
-            props.type === "ADD" ? onAddClick(e) : onUpdateClicked(e, props.idx)
-          }
-        >
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input
-              {...register("name", { required: true })}
-              id="name"
-              type="text"
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="host" className="text-right">
-              Host
-            </Label>
-            <Input
-              {...register("host", { required: true })}
-              id="host"
-              type="text"
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="dbType" className="text-right">
-              DB Type
-            </Label>
-            <select
-              {...register("dbType", { required: true })}
-              className="h-10 col-span-3 items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="SQLITE">SQLITE</option>
-              <option value="MYSQL">MYSQL</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="dbUrl" className="text-right">
-              DB Url
-            </Label>
-            <Input
-              {...register("dbUrl", { required: true })}
-              id="dbUrl"
-              type="text"
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="withCredentials" className="text-right">
-              With Credentials
-            </Label>
-            <input
-              {...register("withCredentials")}
-              id="withCredentials"
-              type="checkbox"
-              className="col-span-3 "
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="header" className="text-right">
-              Header
-            </Label>
-            <Textarea
-              {...register("header", { required: false })}
-              id="header"
-              className="col-span-3 h-36"
-            />
-          </div>
+        {/* TODO: add autoform here!!! */}
 
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={!formState.isValid || !formState.isDirty}
-            >
-              Submit
-            </Button>
-          </DialogFooter>
-        </form>
+        <Form {...form}>
+          <form
+            onSubmit={(e) => {
+              props.type === "ADD"
+                ? onAddClick(e)
+                : onUpdateClicked(e, props.idx);
+            }}
+          >
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="col-span-3"
+                      placeholder="name"
+                      {...field}
+                    ></Input>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="host"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">Host</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="col-span-3"
+                      placeholder="host"
+                      {...field}
+                    ></Input>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dbType"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">DbType</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="select database type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="SQLITE">SQLITE</SelectItem>
+                          <SelectItem value="MYSQL">MYSQL</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dbUrl"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">DbUrl</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="col-span-3"
+                      placeholder="dburl"
+                      {...field}
+                    ></Input>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="header"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">Header</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      className="col-span-3"
+                      placeholder="header"
+                      rows={5}
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="withCredentials"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">Credentials</FormLabel>
+                  <FormControl>
+                    <Switch
+                      className="col-span-3"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className="mt-4">
+              <Button
+                type="submit"
+                disabled={!form.formState.isValid || !form.formState.isDirty}
+              >
+                Submit
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -399,6 +399,7 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
                 id="name"
                 type="text"
                 className="col-span-3"
+                placeholder="Collection Name"
                 disabled={props.type === "EDIT" && !selectedCollection}
               />
             </div>
