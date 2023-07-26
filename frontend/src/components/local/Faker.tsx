@@ -206,6 +206,7 @@ function AddFakerComponent(props: AddFakerComponentProps) {
               id="name"
               type="text"
               className="col-span-3"
+              placeholder="Table Name"
             />
           </div>
 

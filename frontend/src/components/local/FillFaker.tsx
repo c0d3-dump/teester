@@ -133,6 +133,7 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
                   onChange={(event) =>
                     onFakerDataChange(idx, { fieldName: event.target.value })
                   }
+                  placeholder="Column Name"
                 ></Input>
 
                 <Select
@@ -164,6 +165,7 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
                   onChange={(event) =>
                     onFakerDataChange(idx, { constraints: event.target.value })
                   }
+                  placeholder="Attributes"
                 ></Input>
               </CardHeader>
 
