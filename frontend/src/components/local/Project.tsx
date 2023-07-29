@@ -51,9 +51,22 @@ export default function Project() {
   const projects = useAppSelector(selectProject);
   const navigate = useNavigate();
 
+  // TODO: navigate different collection to relevent url
   const onCardClick = useCallback(
-    (idx: number) => {
-      navigate(`/${idx}`);
+    (idx: number, type: string) => {
+      switch (type) {
+        case "API":
+          navigate(`/${idx}`);
+          break;
+        case "FAKER":
+          navigate(`/faker/${idx}`);
+          break;
+        case "UI":
+          navigate(`/ui/${idx}`);
+          break;
+        default:
+          break;
+      }
     },
     [navigate]
   );
@@ -68,12 +81,13 @@ export default function Project() {
   interface CardComponentProps {
     idx: number;
     name: string;
+    type: string;
   }
 
   const CardComponent = (props: CardComponentProps) => (
     <Card className="my-auto flex justify-between mb-4">
       <CardHeader
-        onClick={() => onCardClick(props.idx)}
+        onClick={() => onCardClick(props.idx, props.type)}
         className="cursor-pointer hover:bg-[#050b1a] w-full rounded-lg"
       >
         <CardTitle>{props.name}</CardTitle>
@@ -118,7 +132,12 @@ export default function Project() {
       <div className="my-8">
         {projects.map((proj, idx) => {
           return (
-            <CardComponent name={proj.name} idx={idx} key={idx}></CardComponent>
+            <CardComponent
+              type={proj.config.type}
+              name={proj.name}
+              idx={idx}
+              key={idx}
+            ></CardComponent>
           );
         })}
       </div>
@@ -140,11 +159,12 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
 
   const formSchema = z.object({
     name: z.string({ required_error: "Name is required" }).max(25),
-    host: z.string({ required_error: "Host is required" }).max(100),
-    dbType: z.string({ required_error: "Database type is required" }),
-    dbUrl: z.string({ required_error: "Databse url is required" }).max(100),
-    header: z.string().max(200).default("{}"),
-    withCredentials: z.boolean().default(false),
+    type: z.string({ required_error: "Type is required" }),
+    host: z.string().max(100).optional(),
+    dbType: z.string().max(25).optional(),
+    dbUrl: z.string().max(100).optional(),
+    header: z.string().max(200).default("{}").optional(),
+    withCredentials: z.boolean().default(false).optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -160,6 +180,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
   useEffect(() => {
     if (props.type === "EDIT") {
       form.setValue("name", props.data?.name ?? "");
+      form.setValue("type", props.data?.config.type ?? "");
       form.setValue("host", props.data?.config.host ?? "");
       form.setValue("dbType", props.data?.config.dbType ?? "SQLITE");
       form.setValue("dbUrl", props.data?.config.dbUrl ?? "");
@@ -182,14 +203,16 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
         const newProject: ProjectModel = {
           name: formData.name,
           config: {
-            host: formData.host,
-            dbType: formData.dbType,
-            dbUrl: formData.dbUrl,
-            header: formData.header,
-            withCredentials: formData.withCredentials,
+            type: formData.type,
+            host: formData.host ?? "",
+            dbType: formData.dbType ?? "",
+            dbUrl: formData.dbUrl ?? "",
+            header: formData.header ?? "{}",
+            withCredentials: formData.withCredentials ?? false,
           },
           collections: [],
           fakers: [],
+          uis: [],
         };
         dispatch(addProject(newProject));
 
@@ -210,14 +233,16 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
         const updatedProject: ProjectModel = {
           name: formData.name,
           config: {
-            host: formData.host,
-            dbType: formData.dbType,
-            dbUrl: formData.dbUrl,
-            header: formData.header,
-            withCredentials: formData.withCredentials,
+            type: formData.type,
+            host: formData.host ?? "",
+            dbType: formData.dbType ?? "",
+            dbUrl: formData.dbUrl ?? "",
+            header: formData.header ?? "{}",
+            withCredentials: formData.withCredentials ?? false,
           },
           collections: props.data?.collections ?? [],
           fakers: props.data?.fakers ?? [],
+          uis: props.data?.uis ?? [],
         };
 
         dispatch(
@@ -230,7 +255,13 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
         setDialogState(false);
       }
     },
-    [dispatch, form, props.data?.collections, props.data?.fakers]
+    [
+      dispatch,
+      form,
+      props.data?.collections,
+      props.data?.fakers,
+      props.data?.uis,
+    ]
   );
 
   return (
@@ -267,8 +298,6 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
           </DialogTitle>
         </DialogHeader>
 
-        {/* TODO: add autoform here!!! */}
-
         <Form {...form}>
           <form
             onSubmit={(e) => {
@@ -296,39 +325,23 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
 
             <FormField
               control={form.control}
-              name="host"
+              name="type"
               render={({ field }) => (
                 <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right">Host</FormLabel>
-                  <FormControl>
-                    <Input
-                      className="col-span-3"
-                      placeholder="host"
-                      {...field}
-                    ></Input>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="dbType"
-              render={({ field }) => (
-                <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right">DbType</FormLabel>
+                  <FormLabel className="text-right">Type</FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="select database type" />
+                        <SelectValue placeholder="select type" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectItem value="SQLITE">SQLITE</SelectItem>
-                          <SelectItem value="MYSQL">MYSQL</SelectItem>
+                          <SelectItem value="API">API</SelectItem>
+                          <SelectItem value="UI">UI</SelectItem>
+                          <SelectItem value="FAKER">FAKER</SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -337,63 +350,114 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="dbUrl"
-              render={({ field }) => (
-                <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right">DbUrl</FormLabel>
-                  <FormControl>
-                    <Input
-                      className="col-span-3"
-                      placeholder="dburl"
-                      {...field}
-                    ></Input>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            {form.watch("type") !== "FAKER" ? (
+              <FormField
+                control={form.control}
+                name="host"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-4 items-center gap-4">
+                    <FormLabel className="text-right">Host</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="col-span-3"
+                        placeholder="host"
+                        {...field}
+                      ></Input>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <></>
+            )}
 
-            <FormField
-              control={form.control}
-              name="header"
-              render={({ field }) => (
-                <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right">Header</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      className="col-span-3"
-                      placeholder="header"
-                      rows={5}
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            {form.watch("type") !== "UI" ? (
+              <>
+                <FormField
+                  control={form.control}
+                  name="dbType"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">DbType</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="select database type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="SQLITE">SQLITE</SelectItem>
+                              <SelectItem value="MYSQL">MYSQL</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="withCredentials"
-              render={({ field }) => (
-                <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right">Credentials</FormLabel>
-                  <FormControl>
-                    <Switch
-                      className="col-span-3"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="dbUrl"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">DbUrl</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="col-span-3"
+                          placeholder="dburl"
+                          {...field}
+                        ></Input>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
 
+                <FormField
+                  control={form.control}
+                  name="header"
+                  defaultValue="{}"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Header</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          className="col-span-3"
+                          placeholder="header"
+                          rows={5}
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="withCredentials"
+                  defaultValue={false}
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Credentials</FormLabel>
+                      <FormControl>
+                        <Switch
+                          className="col-span-3"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </>
+            ) : (
+              <></>
+            )}
             <DialogFooter className="mt-4">
-              <Button
-                type="submit"
-                disabled={!form.formState.isValid || !form.formState.isDirty}
-              >
+              <Button type="submit" disabled={!form.formState.isValid}>
                 Submit
               </Button>
             </DialogFooter>

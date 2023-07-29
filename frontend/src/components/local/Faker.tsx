@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Play, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Play, Plus, Trash2, X } from "lucide-react";
 
 import {
   Dialog,
@@ -26,112 +26,87 @@ import {
 import { AlertDialogHeader, AlertDialogFooter } from "../ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { useAppDispatch } from "src/redux/base/hooks";
+import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { useForm } from "react-hook-form";
-import { addFaker, removeFaker } from "src/redux/reducers/project";
+import {
+  addFaker,
+  removeFaker,
+  selectProject,
+} from "src/redux/reducers/project";
 import FillFakerComponent from "./FillFaker";
-import { ScrollArea } from "../ui/scroll-area";
 import { generateSql, runQuery } from "src/utils";
 import { toast } from "react-toastify";
+import { useParams } from "react-router-dom";
+import { setCollectionName } from "src/redux/reducers/app";
 
-interface FakerComponentProps {
-  projectId: number;
-  config: ConfigModel;
-  fakers: FakerContainerModel[];
-}
-
-export default function FakerComponent(props: FakerComponentProps) {
-  const [dialogState, setDialogState] = useState(false);
+export default function Faker() {
+  const projects = useAppSelector(selectProject);
   const dispatch = useAppDispatch();
+  const params = useParams();
+  const projectId = parseInt(params.projectId ?? "-1");
 
   const onDeleteClicked = useCallback(
     (idx: number) => {
-      dispatch(removeFaker({ projectId: props.projectId, fakerId: idx }));
+      dispatch(removeFaker({ projectId: projectId, fakerId: idx }));
     },
-    [dispatch, props.projectId]
+    [dispatch, projectId]
   );
 
+  useEffect(() => {
+    dispatch(setCollectionName(projects[projectId].name));
+  }, [dispatch, projectId, projects]);
+
   return (
-    <Dialog open={dialogState}>
-      <Button
-        className="fixed right-[24px] bottom-[242px] z-100 p-4"
-        size="xs"
-        variant="secondary"
-        type="button"
-        onClick={() => setDialogState(true)}
-      >
-        <Sparkles color="rgb(237, 245, 123)"></Sparkles>
-      </Button>
+    <div className="my-8 w-full">
+      {projects[projectId].fakers.map((faker, idx) => (
+        <Card className="my-auto flex justify-between mb-4" key={idx}>
+          <CardHeader className="w-full rounded-lg">
+            <CardTitle>{faker.name}</CardTitle>
+          </CardHeader>
 
-      <DialogContent className="sm:max-w-[896px] h-[90%] block overflow-y-scroll">
-        <DialogPrimitive.Close
-          onClick={() => setDialogState(false)}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+          <div className="flex align-middle">
+            <RunFakerComponent
+              projectId={projectId}
+              config={projects[projectId].config}
+              faker={faker}
+            ></RunFakerComponent>
 
-        <DialogHeader>
-          <DialogTitle>Faker</DialogTitle>
-        </DialogHeader>
+            <FillFakerComponent
+              projectId={projectId}
+              faker={faker}
+              fakerId={idx}
+            ></FillFakerComponent>
 
-        <ScrollArea className="h-[90%]">
-          {props.fakers.map((faker, idx) => (
-            <Card className="my-auto flex justify-between mb-4" key={idx}>
-              <CardHeader className="w-full rounded-lg">
-                <CardTitle>{faker.name}</CardTitle>
-              </CardHeader>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="xs" variant="ghost" className="p-2 my-auto mx-2">
+                  <Trash2 color="rgb(239 68 68)"></Trash2>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Do you really want to delete Faker collection?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    your Faker collection.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDeleteClicked(idx)}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </Card>
+      ))}
 
-              <div className="flex align-middle">
-                <RunFakerComponent
-                  projectId={props.projectId}
-                  config={props.config}
-                  faker={props.fakers[idx]}
-                ></RunFakerComponent>
-
-                <FillFakerComponent
-                  projectId={props.projectId}
-                  faker={faker}
-                  fakerId={idx}
-                ></FillFakerComponent>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      className="p-2 my-auto mx-2"
-                    >
-                      <Trash2 color="rgb(239 68 68)"></Trash2>
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Do you really want to delete Faker collection?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete your Faker collection.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onDeleteClicked(idx)}>
-                        Continue
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </Card>
-          ))}
-        </ScrollArea>
-
-        <AddFakerComponent projectId={props.projectId}></AddFakerComponent>
-      </DialogContent>
-    </Dialog>
+      <AddFakerComponent projectId={projectId}></AddFakerComponent>
+    </div>
   );
 }
 
@@ -211,10 +186,7 @@ function AddFakerComponent(props: AddFakerComponentProps) {
           </div>
 
           <DialogFooter>
-            <Button
-              type="submit"
-              disabled={!formState.isValid || !formState.isDirty}
-            >
+            <Button type="submit" disabled={!formState.isValid}>
               Submit
             </Button>
           </DialogFooter>
@@ -305,10 +277,7 @@ function RunFakerComponent(props: RunFakerComponentProps) {
           </div>
 
           <DialogFooter>
-            <Button
-              type="submit"
-              disabled={!formState.isValid || !formState.isDirty}
-            >
+            <Button type="submit" disabled={!formState.isValid}>
               Submit
             </Button>
           </DialogFooter>

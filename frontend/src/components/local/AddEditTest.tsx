@@ -267,15 +267,15 @@ function ApiTestComponent(props: TestComponentProps) {
       }
     >
       <div className="space-y-4">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="tname">Name</Label>
         <Input
           {...register("name", { required: true })}
-          id="name"
+          id="tname"
           type="text"
         />
       </div>
 
-      <Label>Endpoint</Label>
+      <Label htmlFor="endpoint">Endpoint</Label>
       <div className="flex">
         <select
           {...register("methodType", { required: true })}
@@ -418,10 +418,10 @@ function DbTestComponent(props: TestComponentProps) {
       }
     >
       <div className="space-y-4">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="dname">Name</Label>
         <Input
           {...register("name", { required: true })}
-          id="name"
+          id="dname"
           type="text"
         />
       </div>

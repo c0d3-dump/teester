@@ -15,6 +15,11 @@
 - run binary using `./teester-linux-64` in terminal
 - now app is running on `http://localhost:3333`
 
+### hot reloading with reflex
+```bash
+reflex -r '\.go$' -s -- sh -c "go run."
+```
+
 ### how to build for your system
 
 #### make sure you have go, make installed

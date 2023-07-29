@@ -5,9 +5,11 @@ export interface ProjectModel {
   config: ConfigModel;
   collections: CollectionModel[];
   fakers: FakerContainerModel[];
+  uis: UiModel[];
 }
 
 export interface ConfigModel {
+  type: string;
   host: string;
   dbType: string;
   dbUrl: string;
@@ -46,6 +48,8 @@ export interface FakerModel {
   type: string;
   constraints: string;
 }
+
+export interface UiModel {}
 
 export interface AssertionModel {
   status: number;

@@ -10,6 +10,8 @@ import { useAppDispatch, useAppSelector } from "./redux/base/hooks";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { selectApp, setCollectionName } from "./redux/reducers/app";
+import Faker from "./components/local/Faker";
+import Ui from "./components/local/Ui";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -25,6 +27,14 @@ function App() {
     {
       path: "/:projectId",
       Component: Collection,
+    },
+    {
+      path: "/faker/:projectId",
+      Component: Faker,
+    },
+    {
+      path: "/ui/:projectId",
+      Component: Ui,
     },
   ]);
 

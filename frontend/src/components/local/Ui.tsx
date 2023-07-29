@@ -41,7 +41,7 @@ import { addTester, clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
 import { setCollectionName } from "src/redux/reducers/app";
 
-export default function Collection() {
+export default function Ui() {
   const projects = useAppSelector(selectProject);
   const dispatch = useAppDispatch();
   const params = useParams();
