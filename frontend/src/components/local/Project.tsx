@@ -350,7 +350,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
               )}
             />
 
-            {form.watch("type") !== "FAKER" ? (
+            {form.watch("type") && form.watch("type") !== "FAKER" ? (
               <FormField
                 control={form.control}
                 name="host"
@@ -371,7 +371,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
               <></>
             )}
 
-            {form.watch("type") !== "UI" ? (
+            {form.watch("type") && form.watch("type") !== "UI" ? (
               <>
                 <FormField
                   control={form.control}
@@ -415,7 +415,13 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
                     </FormItem>
                   )}
                 />
+              </>
+            ) : (
+              <></>
+            )}
 
+            {form.watch("type") && form.watch("type") === "API" ? (
+              <>
                 <FormField
                   control={form.control}
                   name="header"
@@ -456,6 +462,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
             ) : (
               <></>
             )}
+
             <DialogFooter className="mt-4">
               <Button type="submit" disabled={!form.formState.isValid}>
                 Submit
