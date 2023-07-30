@@ -90,8 +90,6 @@ export const runQuery = async (config: ConfigModel, query: string) => {
 };
 
 export const runUiTest = async (projectId: number, uiId: number) => {
-  console.log("Hi there!");
-
   return axios.post(`${env.SERVER_URL}/run-ui-test`, {
     projectId,
     uiId,
