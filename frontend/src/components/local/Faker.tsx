@@ -150,7 +150,7 @@ function AddFakerComponent(props: AddFakerComponentProps) {
   return (
     <Dialog open={dialogState}>
       <Button
-        className="absolute right-[24px] bottom-[24px] z-100 p-4"
+        className="fixed right-[24px] bottom-[24px] z-100 p-4"
         size="xs"
         variant="secondary"
         onClick={() => setDialogState(true)}
@@ -270,9 +270,11 @@ function RunFakerComponent(props: RunFakerComponentProps) {
             </Label>
             <Input
               {...register("count", { required: true })}
+              defaultValue={1}
               id="count"
               type="number"
               className="col-span-3"
+              min={1}
             />
           </div>
 

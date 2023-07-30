@@ -158,7 +158,7 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
   const dispatch = useAppDispatch();
 
   const formSchema = z.object({
-    name: z.string({ required_error: "Name is required" }).max(25),
+    name: z.string({ required_error: "Name is required" }).min(1).max(25),
     type: z.string({ required_error: "Type is required" }),
     host: z.string().max(100).optional(),
     dbType: z.string().max(25).optional(),

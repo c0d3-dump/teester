@@ -46,6 +46,11 @@ type QueryBody struct {
 	Query  string `json:"query"`
 }
 
+type RunUiBody struct {
+	ProjectId int `json:"projectId"`
+	UiId      int `json:"uiId"`
+}
+
 func fileCheck(filename string) error {
 	conn, err := os.Open(filename)
 	if err != nil {
@@ -75,7 +80,6 @@ func openbrowser(url string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 func main() {
@@ -210,6 +214,35 @@ func main() {
 		}
 
 		return c.JSON(http.StatusOK, data)
+	})
+
+	app.POST("/run-ui-test", func(c echo.Context) error {
+		var err error
+
+		body := new(RunUiBody)
+		err = c.Bind(body)
+		if err != nil {
+			fmt.Println(err)
+			return c.String(http.StatusBadRequest, err.Error())
+		}
+
+		data, err := readJson(dataFileName)
+		if err != nil {
+			return c.String(http.StatusBadRequest, err.Error())
+		}
+
+		var jsonStruct []map[string]interface{}
+		json.Unmarshal([]byte(data), &jsonStruct)
+
+		var uiTestData UiProject
+		tempData := jsonStruct[body.ProjectId]
+
+		temporaryVariable, _ := json.Marshal(tempData)
+		_ = json.Unmarshal(temporaryVariable, &uiTestData)
+
+		uiTestData.Run(body.UiId)
+
+		return c.NoContent(http.StatusOK)
 	})
 
 	go openbrowser("http://localhost:3333")

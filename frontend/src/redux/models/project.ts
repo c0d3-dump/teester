@@ -5,7 +5,7 @@ export interface ProjectModel {
   config: ConfigModel;
   collections: CollectionModel[];
   fakers: FakerContainerModel[];
-  uis: UiModel[];
+  uis: UiContainerModel[];
 }
 
 export interface ConfigModel {
@@ -49,7 +49,29 @@ export interface FakerModel {
   constraints: string;
 }
 
-export interface UiModel {}
+export interface UiContainerModel {
+  name: string;
+  screenshots: boolean;
+  data: UiTestModel[];
+}
+
+export interface UiTestModel {
+  selector: string;
+  input: string;
+  event: string;
+}
+
+export const UiEvent = [
+  "Nothing",
+  "Wait",
+  "LeftMouseClick",
+  "RightMouseClick",
+  "Enter",
+  "Tab",
+  "Space",
+  "Ctrl",
+  "Alt",
+];
 
 export interface AssertionModel {
   status: number;

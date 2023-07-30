@@ -7,6 +7,8 @@ import {
   FakerContainerModel,
   FakerModel,
   ProjectModel,
+  UiContainerModel,
+  UiTestModel,
 } from "../models/project";
 import { setProjects } from "src/utils";
 
@@ -38,6 +40,19 @@ interface UpdateFakerPayloadInterface {
   projectId: number;
   fakerId: number;
   data: FakerModel[];
+}
+interface AddUiPayloadInterface {
+  data: UiContainerModel;
+  projectId: number;
+}
+interface RemoveUiPayloadInterface {
+  projectId: number;
+  uiId: number;
+}
+interface UpdateUiPayloadInterface {
+  projectId: number;
+  uiId: number;
+  data: UiTestModel[];
 }
 interface RemoveCollectionPayloadInterface {
   projectId: number;
@@ -335,6 +350,64 @@ export const projectSlice = createSlice({
         console.log(err);
       });
     },
+    addUi(state, { payload }: { payload: AddUiPayloadInterface }) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+          tempProj.uis.push(payload.data);
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    removeUi(state, { payload }: { payload: RemoveUiPayloadInterface }) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+          tempProj.uis = tempProj.uis.filter(
+            (_col, idx) => idx !== payload.uiId
+          );
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    updateUi(state, { payload }: { payload: UpdateUiPayloadInterface }) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+
+          tempProj.uis = tempProj.uis.map((col, jdx) => {
+            if (jdx === payload.uiId) {
+              return {
+                name: col.name,
+                screenshots: col.screenshots,
+                data: payload.data,
+              };
+            } else {
+              return col;
+            }
+          });
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
   },
 });
 
@@ -353,6 +426,9 @@ export const {
   addFaker,
   removeFaker,
   updateFaker,
+  addUi,
+  removeUi,
+  updateUi,
 } = projectSlice.actions;
 
 export const selectProject = (state: RootState) => state.project.value;

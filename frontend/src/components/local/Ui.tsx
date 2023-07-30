@@ -1,10 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../ui/accordion";
+
+import { Play, Plus, Trash2, X, Edit, Save } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -12,34 +9,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import Select from "react-select";
-import { Button } from "../ui/button";
-import { Edit, Play, Plus, X } from "lucide-react";
+import { Card, CardHeader, CardTitle } from "../ui/card";
 
-import { Label } from "@radix-ui/react-label";
-import { Input } from "../ui/input";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Button } from "../ui/button";
+import {
+  UiContainerModel,
+  UiEvent,
+  UiTestModel,
+} from "src/redux/models/project";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "../ui/alert-dialog";
+import { AlertDialogHeader, AlertDialogFooter } from "../ui/alert-dialog";
+import { Input } from "../ui/input";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { useForm } from "react-hook-form";
 import {
-  addCollection,
-  removeCollection,
+  addUi,
+  removeUi,
   selectProject,
-  updateCollection,
+  updateUi,
 } from "src/redux/reducers/project";
-import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
-import AddEditTestComponent from "./AddEditTest";
-import TestComponent from "./Test";
-import {
-  isDeepEqual,
-  runApi,
-  runQuery,
-  extractVariables,
-  replaceTokens,
-} from "src/utils";
-import { addTester, clearTester } from "src/redux/reducers/tester";
 import { useParams } from "react-router-dom";
 import { setCollectionName } from "src/redux/reducers/app";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
+import Select from "react-select";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Switch } from "../ui/switch";
+import { runUiTest } from "src/utils";
 
 export default function Ui() {
   const projects = useAppSelector(selectProject);
@@ -47,281 +53,136 @@ export default function Ui() {
   const params = useParams();
   const projectId = parseInt(params.projectId ?? "-1");
 
-  const onDeleteClicked = (idx: number) => {
-    dispatch(clearTester());
-    dispatch(removeCollection({ projectId, collectionId: idx }));
-  };
-
   useEffect(() => {
     dispatch(setCollectionName(projects[projectId].name));
   }, [dispatch, projectId, projects]);
 
-  const runTests = useCallback(
-    async (collectionId: number) => {
-      dispatch(clearTester());
-
-      const config = projects[projectId].config;
-      const testList = projects[projectId].collections[collectionId].tests;
-      let variables = {};
-
-      for (let testId = 0; testId < testList.length; testId++) {
-        const test = testList[testId];
-
-        if ((test as ApiModel).methodType) {
-          const apiModel: any = { ...test };
-
-          try {
-            const configHeader = JSON.parse(
-              config.header ? config.header : "{}"
-            );
-
-            const header = replaceTokens(apiModel.header, variables);
-            apiModel.header = header ? JSON.parse(header) : {};
-
-            apiModel.header = {
-              ...configHeader,
-              ...apiModel.header,
-            };
-          } catch (error) {
-            apiModel.header = {};
-          }
-
-          try {
-            const body = replaceTokens(apiModel.body, variables);
-            apiModel.body = JSON.parse(body);
-          } catch (error) {
-            apiModel.body = {};
-          }
-
-          const res = await runApi(
-            config.host,
-            apiModel,
-            config.withCredentials
-          );
-
-          let assertValue = false;
-          if (
-            res.status === parseInt(apiModel.assertion.status.toString()) &&
-            (apiModel.assertion.body.length < 1 ||
-              isDeepEqual(JSON.parse(apiModel.assertion.body), res.data))
-          ) {
-            variables = {
-              ...variables,
-              ...extractVariables(
-                res.data,
-                apiModel.assertion.body.length < 1
-                  ? {}
-                  : JSON.parse(apiModel.assertion.body)
-              ),
-            };
-
-            assertValue = true;
-          }
-
-          let parsedBodyData;
-          try {
-            parsedBodyData = JSON.parse(res.data);
-          } catch (error) {
-            parsedBodyData = res.data;
-          }
-
-          dispatch(
-            addTester({
-              collectionId,
-              testId: testId,
-              assert: assertValue,
-              status: res.status,
-              body: parsedBodyData,
-            })
-          );
-        } else {
-          let assertValue = false;
-          try {
-            const dbModel = test as DbModel;
-            await runQuery(config, dbModel.query);
-            assertValue = true;
-          } catch (error) {}
-
-          dispatch(
-            addTester({
-              collectionId,
-              testId: testId,
-              assert: assertValue,
-            })
-          );
-        }
-      }
+  const onDeleteClicked = useCallback(
+    (idx: number) => {
+      dispatch(removeUi({ projectId: projectId, uiId: idx }));
     },
-    [dispatch, projectId, projects]
+    [dispatch, projectId]
+  );
+
+  const runUiTests = useCallback(
+    async (uiId: number) => {
+      try {
+        await runUiTest(projectId, uiId);
+      } catch (error) {}
+    },
+    [projectId]
   );
 
   return (
-    <>
-      <div className="my-8">
-        <Accordion type="single" collapsible className="w-full">
-          {projects[projectId].collections.map((col, idx) => {
-            return (
-              <AccordionItem value={col.name} className="mb-4" key={idx}>
-                <AccordionTrigger onDelete={() => onDeleteClicked(idx)}>
-                  {col.name}
-                </AccordionTrigger>
-                <AccordionContent>
-                  <TestComponent
-                    tests={col.tests}
-                    collectionId={idx}
-                    key={idx}
-                  ></TestComponent>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-      </div>
+    <div className="my-8 w-full">
+      {projects[projectId].uis.map((ui, idx) => (
+        <Card className="my-auto flex justify-between mb-4" key={idx}>
+          <CardHeader className="w-full rounded-lg">
+            <CardTitle>{ui.name}</CardTitle>
+          </CardHeader>
 
-      <AddEditCollectionComponent
-        type="RUN"
-        collectionList={projects[projectId].collections}
-        runTests={runTests}
-      ></AddEditCollectionComponent>
-      <AddEditCollectionComponent
-        type="EDIT"
-        collectionList={projects[projectId].collections}
-      ></AddEditCollectionComponent>
-      <AddEditCollectionComponent type="ADD"></AddEditCollectionComponent>
-    </>
+          <div className="flex align-middle">
+            <Button
+              className="p-2 my-auto mx-2"
+              size="xs"
+              variant="ghost"
+              onClick={() => runUiTests(idx)}
+            >
+              <Play color="lightgreen"></Play>
+            </Button>
+
+            <FillUiComponent
+              projectId={projectId}
+              uiTest={ui}
+              uiTestId={idx}
+            ></FillUiComponent>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="xs" variant="ghost" className="p-2 my-auto mx-2">
+                  <Trash2 color="rgb(239 68 68)"></Trash2>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Do you really want to delete Ui tests?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    your Ui tests.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDeleteClicked(idx)}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </Card>
+      ))}
+
+      <AddUiComponent projectId={projectId}></AddUiComponent>
+    </div>
   );
 }
 
-interface AddEditCollectionComponentProps {
-  type: "ADD" | "EDIT" | "RUN";
-  collectionList?: CollectionModel[];
-  runTests?: (collectionId: number) => Promise<void>;
+interface AddUiComponentProps {
+  projectId: number;
 }
 
-function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
+function AddUiComponent(props: AddUiComponentProps) {
   const [dialogState, setDialogState] = useState(false);
-  const { setValue, register, formState, getValues, reset } = useForm();
   const dispatch = useAppDispatch();
-  const [selectedCollection, setSelectedCollection] = useState("");
-  const params = useParams();
-  const projectId = parseInt(params.projectId ?? "-1");
+
+  const formSchema = z.object({
+    name: z.string({ required_error: "Name is required" }).min(1).max(25),
+    screenshots: z.boolean().optional().default(false),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
 
   useEffect(() => {
     if (!dialogState) {
-      reset();
-      setSelectedCollection("");
+      form.reset();
     }
-  }, [dialogState, reset]);
-
-  useEffect(() => {
-    if (props.type !== "ADD" && selectedCollection) {
-      const collectionList = props.collectionList ?? [];
-      setValue("name", collectionList[parseInt(selectedCollection)].name);
-    }
-  }, [props.collectionList, props.type, setValue, selectedCollection]);
+  }, [dialogState, form]);
 
   const onAddClick = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
-        const newCollection: CollectionModel = {
+        const newUiContainer: UiContainerModel = {
           name: formData.name,
-          tests: [],
+          data: [],
+          screenshots: formData.screenshots,
         };
-        dispatch(clearTester());
-
-        dispatch(addCollection({ data: newCollection, projectId }));
+        dispatch(addUi({ projectId: props.projectId, data: newUiContainer }));
 
         setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, projectId]
+    [dispatch, form, props.projectId]
   );
-
-  const onUpdateClicked = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-
-      const formData = getValues();
-      const isValid = formState.isValid;
-
-      if (isValid) {
-        const collectionList = props.collectionList ?? [];
-        const updatedCollection: CollectionModel = {
-          name: formData.name,
-          tests: collectionList[parseInt(selectedCollection)].tests ?? [],
-        };
-        dispatch(clearTester());
-
-        dispatch(
-          updateCollection({
-            data: updatedCollection,
-            projectId,
-            collectionId: parseInt(selectedCollection),
-          })
-        );
-
-        setDialogState(false);
-      }
-    },
-    [
-      dispatch,
-      formState.isValid,
-      getValues,
-      projectId,
-      props.collectionList,
-      selectedCollection,
-    ]
-  );
-
-  const onRunClicked = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      props.runTests?.(parseInt(selectedCollection));
-      setDialogState(false);
-    },
-    [props, selectedCollection]
-  );
-
-  const buttonClass = useCallback(() => {
-    switch (props.type) {
-      case "ADD":
-        return "fixed right-[24px] bottom-[24px] z-100 p-4";
-      case "EDIT":
-        return "fixed right-[24px] bottom-[96px] z-100 p-4";
-      case "RUN":
-        return "fixed right-[24px] bottom-[169px] z-100 p-4";
-      default:
-        return "";
-    }
-  }, [props.type]);
-
-  const RenderIcon = useCallback(() => {
-    switch (props.type) {
-      case "ADD":
-        return <Plus color="lightblue" size={24}></Plus>;
-      case "EDIT":
-        return <Edit color="lightgrey" size={24}></Edit>;
-      case "RUN":
-        return <Play color="lightgreen"></Play>;
-      default:
-        return <></>;
-    }
-  }, [props.type]);
 
   return (
     <Dialog open={dialogState}>
       <Button
-        className={buttonClass()}
+        className="fixed right-[24px] bottom-[24px] z-100 p-4"
         size="xs"
         variant="secondary"
         onClick={() => setDialogState(true)}
       >
-        <RenderIcon></RenderIcon>
+        <Plus color="#ffffff"></Plus>
       </Button>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -334,90 +195,241 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
         </DialogPrimitive.Close>
 
         <DialogHeader>
-          <DialogTitle>{props.type} Collection</DialogTitle>
+          <DialogTitle>Add Ui</DialogTitle>
         </DialogHeader>
 
-        {props.type !== "ADD" ? (
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="collection" className="text-right">
-              Collection
-            </Label>
-            <Select
-              className="col-span-3"
-              theme={(theme) => ({
-                ...theme,
-                borderRadius: 4,
-                colors: {
-                  ...theme.colors,
-                  primary: "#1d283a",
-                  neutral0: "#030711",
-                  primary25: "#0d1324",
-                  neutral20: "#1d283a",
-                  neutral30: "#1d283a",
-                  neutral80: "#ffffff",
-                },
-              })}
-              value={{
-                value: selectedCollection,
-                label: selectedCollection
-                  ? props.collectionList?.[parseInt(selectedCollection)].name
-                  : "",
-              }}
-              onChange={(event) => setSelectedCollection(event?.value ?? "")}
-              options={props.collectionList?.map((col, idx) => ({
-                value: idx.toString(),
-                label: col.name,
-              }))}
-              isSearchable={true}
-            ></Select>
-          </div>
-        ) : null}
+        <Form {...form}>
+          <form className="grid gap-4 py-4" onSubmit={(e) => onAddClick(e)}>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="col-span-3"
+                      placeholder="Enter Ui Name"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-        <form
-          className="grid gap-4 py-4"
-          onSubmit={(e) =>
-            props.type === "ADD"
-              ? onAddClick(e)
-              : props.type === "EDIT"
-              ? onUpdateClicked(e)
-              : onRunClicked(e)
-          }
+            <FormField
+              control={form.control}
+              name="screenshots"
+              defaultValue={false}
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">Screenshots</FormLabel>
+                  <FormControl>
+                    <Switch
+                      className="col-span-3"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="submit" disabled={!form.formState.isValid}>
+                Submit
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface FillUiComponentProps {
+  projectId: number;
+  uiTestId: number;
+  uiTest: UiContainerModel;
+}
+
+type NumberBooleanMap = {
+  [key: number]: boolean;
+};
+
+function FillUiComponent(props: FillUiComponentProps) {
+  const [dialogState, setDialogState] = useState(false);
+  const [uiTestList, setUiTestList] = useState<UiTestModel[]>([]);
+  const [dirtyList, setDirtyList] = useState<NumberBooleanMap>({});
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    setUiTestList(props.uiTest.data);
+  }, [props.uiTest.data]);
+
+  const updateUiData = useCallback(
+    (uiData: UiTestModel[]) => {
+      dispatch(
+        updateUi({
+          projectId: props.projectId,
+          uiId: props.uiTestId,
+          data: uiData,
+        })
+      );
+      setDirtyList({});
+    },
+    [dispatch, props.projectId, props.uiTestId]
+  );
+
+  const onDeleteClicked = useCallback(
+    (idx: number) => {
+      const updatedUiList = [...uiTestList.filter((_, id) => id !== idx)];
+      setUiTestList(updatedUiList);
+      updateUiData(updatedUiList);
+    },
+    [uiTestList, updateUiData]
+  );
+
+  const onAddClick = useCallback(() => {
+    setUiTestList([
+      ...uiTestList,
+      {
+        selector: "",
+        input: "",
+        event: "",
+      },
+    ]);
+  }, [uiTestList]);
+
+  const onUiDataChange = useCallback(
+    (uiTestId: number, data: any) => {
+      setUiTestList([
+        ...uiTestList.map((fak, idx) =>
+          idx === uiTestId ? { ...fak, ...data } : fak
+        ),
+      ]);
+
+      setDirtyList({
+        ...dirtyList,
+        [uiTestId]: true,
+      });
+    },
+    [dirtyList, uiTestList]
+  );
+
+  const UiEventOptions = useCallback(() => {
+    return UiEvent.map((fk) => ({
+      value: fk,
+      label: fk,
+    }));
+  }, []);
+
+  return (
+    <Dialog open={dialogState}>
+      <Button
+        className="p-2 my-auto mx-2"
+        size="xs"
+        variant="ghost"
+        type="button"
+        onClick={() => setDialogState(true)}
+      >
+        <Edit color="rgb(255,255,255)"></Edit>
+      </Button>
+
+      <DialogContent className="sm:max-w-[896px] h-[90%] block overflow-y-scroll">
+        <DialogPrimitive.Close
+          onClick={() => setDialogState(false)}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
         >
-          {props.type !== "RUN" ? (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                {...register("name", { required: true })}
-                id="name"
-                type="text"
-                className="col-span-3"
-                placeholder="Collection Name"
-                disabled={props.type === "EDIT" && !selectedCollection}
-              />
-            </div>
-          ) : null}
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
 
-          {props.type === "EDIT" && selectedCollection ? (
-            <AddEditTestComponent
-              type="ADD"
-              collectionId={parseInt(selectedCollection)}
-            ></AddEditTestComponent>
-          ) : null}
+        <DialogHeader>
+          <DialogTitle>Ui Tests</DialogTitle>
+        </DialogHeader>
 
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={
-                (!formState.isValid && !formState.isDirty) ||
-                (props.type === "RUN" && !selectedCollection)
-              }
+        <ScrollArea className="h-[90%]">
+          {uiTestList?.map((uiTest, idx) => (
+            <Card
+              className={`my-auto flex justify-between mb-4 rounded-none`}
+              key={idx}
             >
-              Submit
-            </Button>
-          </DialogFooter>
-        </form>
+              <CardHeader className="flex gap-2 w-full">
+                <Input
+                  value={uiTest.selector}
+                  type="text"
+                  onChange={(event) =>
+                    onUiDataChange(idx, { selector: event.target.value })
+                  }
+                  placeholder="Selector"
+                ></Input>
+
+                <Input
+                  value={uiTest.input}
+                  type="text"
+                  onChange={(event) =>
+                    onUiDataChange(idx, { input: event.target.value })
+                  }
+                  placeholder="Input"
+                ></Input>
+
+                <Select
+                  className="w-full"
+                  theme={(theme) => ({
+                    ...theme,
+                    borderRadius: 4,
+                    colors: {
+                      ...theme.colors,
+                      primary: "#1d283a",
+                      neutral0: "#030711",
+                      primary25: "#0d1324",
+                      neutral20: "#1d283a",
+                      neutral30: "#1d283a",
+                      neutral80: "#ffffff",
+                    },
+                  })}
+                  value={{ value: uiTest.event, label: uiTest.event }}
+                  onChange={(event) =>
+                    onUiDataChange(idx, { event: event?.value })
+                  }
+                  options={UiEventOptions()}
+                  isSearchable={true}
+                ></Select>
+              </CardHeader>
+
+              <div className="flex align-middle">
+                <Button
+                  size="xs"
+                  variant="secondary"
+                  className="p-2 my-auto mx-2"
+                  onClick={() => onDeleteClicked(idx)}
+                >
+                  <Trash2></Trash2>
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </ScrollArea>
+
+        <Button
+          disabled={Object.keys(dirtyList).length < 1}
+          size="xs"
+          variant="secondary"
+          className="absolute right-[24px] bottom-[96px] z-100 p-4"
+          onClick={() => updateUiData(uiTestList)}
+        >
+          <Save color="lightgreen"></Save>
+        </Button>
+
+        <Button
+          className="absolute right-[24px] bottom-[24px] z-100 p-4"
+          size="xs"
+          variant="secondary"
+          onClick={() => onAddClick()}
+        >
+          <Plus color="#ffffff"></Plus>
+        </Button>
       </DialogContent>
     </Dialog>
   );

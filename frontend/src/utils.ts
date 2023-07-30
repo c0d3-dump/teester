@@ -89,6 +89,15 @@ export const runQuery = async (config: ConfigModel, query: string) => {
   });
 };
 
+export const runUiTest = async (projectId: number, uiId: number) => {
+  console.log("Hi there!");
+
+  return axios.post(`${env.SERVER_URL}/run-ui-test`, {
+    projectId,
+    uiId,
+  });
+};
+
 export const isDeepEqual = (targetObj: any, sourceObj: any) => {
   if (typeof targetObj !== "object" || typeof sourceObj !== "object") {
     if (typeof targetObj === "string" && targetObj.match(/@\{(.*?)\}/))
