@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Edit, Plus, Save, Trash2, X } from "lucide-react";
+import { Plus, Save, Trash2, X } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
@@ -11,12 +11,12 @@ import {
   FakerModel,
   FakerType,
 } from "src/redux/models/project";
-import { Card, CardHeader } from "../ui/card";
+import { Card, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import Select from "react-select";
 import { ScrollArea } from "../ui/scroll-area";
 import { useAppDispatch } from "src/redux/base/hooks";
-import { updateFaker } from "src/redux/reducers/project";
+import { updateFillFaker } from "src/redux/reducers/project";
 
 interface FillFakerComponentProps {
   projectId: number;
@@ -41,7 +41,7 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
   const updateFakerData = useCallback(
     (fakerData: FakerModel[]) => {
       dispatch(
-        updateFaker({
+        updateFillFaker({
           projectId: props.projectId,
           fakerId: props.fakerId,
           data: fakerData,
@@ -97,15 +97,12 @@ export default function FillFakerComponent(props: FillFakerComponentProps) {
 
   return (
     <Dialog open={dialogState}>
-      <Button
-        className="p-2 my-auto mx-2"
-        size="xs"
-        variant="ghost"
-        type="button"
+      <CardHeader
         onClick={() => setDialogState(true)}
+        className="cursor-pointer hover:bg-[#050b1a] w-full rounded-lg"
       >
-        <Edit color="rgb(255,255,255)"></Edit>
-      </Button>
+        <CardTitle>{props.faker.name}</CardTitle>
+      </CardHeader>
 
       <DialogContent className="sm:max-w-[896px] h-[90%] block overflow-y-scroll">
         <DialogPrimitive.Close

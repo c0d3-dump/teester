@@ -51,7 +51,6 @@ export default function Project() {
   const projects = useAppSelector(selectProject);
   const navigate = useNavigate();
 
-  // TODO: navigate different collection to relevent url
   const onCardClick = useCallback(
     (idx: number, type: string) => {
       switch (type) {

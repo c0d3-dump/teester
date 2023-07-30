@@ -36,6 +36,7 @@ import {
   removeUi,
   selectProject,
   updateUi,
+  updateUiTests,
 } from "src/redux/reducers/project";
 import { useParams } from "react-router-dom";
 import { setCollectionName } from "src/redux/reducers/app";
@@ -77,9 +78,11 @@ export default function Ui() {
     <div className="my-8 w-full">
       {projects[projectId].uis.map((ui, idx) => (
         <Card className="my-auto flex justify-between mb-4" key={idx}>
-          <CardHeader className="w-full rounded-lg">
-            <CardTitle>{ui.name}</CardTitle>
-          </CardHeader>
+          <FillUiComponent
+            projectId={projectId}
+            uiTest={ui}
+            uiTestId={idx}
+          ></FillUiComponent>
 
           <div className="flex align-middle">
             <Button
@@ -91,11 +94,13 @@ export default function Ui() {
               <Play color="lightgreen"></Play>
             </Button>
 
-            <FillUiComponent
+            <AddEditUiComponent
+              type="EDIT"
               projectId={projectId}
-              uiTest={ui}
-              uiTestId={idx}
-            ></FillUiComponent>
+              data={ui}
+              idx={idx}
+              key={idx}
+            ></AddEditUiComponent>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -125,16 +130,19 @@ export default function Ui() {
         </Card>
       ))}
 
-      <AddUiComponent projectId={projectId}></AddUiComponent>
+      <AddEditUiComponent type="ADD" projectId={projectId}></AddEditUiComponent>
     </div>
   );
 }
 
-interface AddUiComponentProps {
+interface AddEditUiComponentProps {
+  type: "ADD" | "EDIT";
   projectId: number;
+  idx?: number;
+  data?: UiContainerModel;
 }
 
-function AddUiComponent(props: AddUiComponentProps) {
+function AddEditUiComponent(props: AddEditUiComponentProps) {
   const [dialogState, setDialogState] = useState(false);
   const dispatch = useAppDispatch();
 
@@ -148,10 +156,17 @@ function AddUiComponent(props: AddUiComponentProps) {
   });
 
   useEffect(() => {
-    if (!dialogState) {
+    if (props.type === "ADD" && !dialogState) {
       form.reset();
     }
-  }, [dialogState, form]);
+  }, [dialogState, form, props.type]);
+
+  useEffect(() => {
+    if (props.type === "EDIT") {
+      form.setValue("name", props.data?.name ?? "");
+      form.setValue("screenshots", props.data?.screenshots ?? false);
+    }
+  }, [form, props.data, props.type]);
 
   const onAddClick = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -174,15 +189,50 @@ function AddUiComponent(props: AddUiComponentProps) {
     [dispatch, form, props.projectId]
   );
 
+  const onUpdateClick = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
+
+      if (isValid) {
+        const newUiContainer: UiContainerModel = {
+          name: formData.name,
+          data: props.data?.data ?? [],
+          screenshots: formData.screenshots,
+        };
+        dispatch(
+          updateUi({
+            projectId: props.projectId,
+            data: newUiContainer,
+            uiId: props.idx ?? -1,
+          })
+        );
+
+        setDialogState(false);
+      }
+    },
+    [dispatch, form, props.data?.data, props.idx, props.projectId]
+  );
+
   return (
     <Dialog open={dialogState}>
       <Button
-        className="fixed right-[24px] bottom-[24px] z-100 p-4"
+        className={
+          props.type === "ADD"
+            ? "fixed right-[24px] bottom-[24px] z-100 p-4"
+            : "p-2 my-auto ml-2"
+        }
         size="xs"
-        variant="secondary"
+        variant={props.type === "ADD" ? "secondary" : "ghost"}
         onClick={() => setDialogState(true)}
       >
-        <Plus color="#ffffff"></Plus>
+        {props.type === "ADD" ? (
+          <Plus color="#ffffff"></Plus>
+        ) : (
+          <Edit color="#ffffff"></Edit>
+        )}
       </Button>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -195,11 +245,16 @@ function AddUiComponent(props: AddUiComponentProps) {
         </DialogPrimitive.Close>
 
         <DialogHeader>
-          <DialogTitle>Add Ui</DialogTitle>
+          <DialogTitle>{props.type === "ADD" ? "Add" : "Edit"} Ui</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form className="grid gap-4 py-4" onSubmit={(e) => onAddClick(e)}>
+          <form
+            className="grid gap-4 py-4"
+            onSubmit={(e) =>
+              props.type === "ADD" ? onAddClick(e) : onUpdateClick(e)
+            }
+          >
             <FormField
               control={form.control}
               name="name"
@@ -270,7 +325,7 @@ function FillUiComponent(props: FillUiComponentProps) {
   const updateUiData = useCallback(
     (uiData: UiTestModel[]) => {
       dispatch(
-        updateUi({
+        updateUiTests({
           projectId: props.projectId,
           uiId: props.uiTestId,
           data: uiData,
@@ -326,15 +381,12 @@ function FillUiComponent(props: FillUiComponentProps) {
 
   return (
     <Dialog open={dialogState}>
-      <Button
-        className="p-2 my-auto mx-2"
-        size="xs"
-        variant="ghost"
-        type="button"
+      <CardHeader
         onClick={() => setDialogState(true)}
+        className="cursor-pointer hover:bg-[#050b1a] w-full rounded-lg"
       >
-        <Edit color="rgb(255,255,255)"></Edit>
-      </Button>
+        <CardTitle>{props.uiTest.name}</CardTitle>
+      </CardHeader>
 
       <DialogContent className="sm:max-w-[896px] h-[90%] block overflow-y-scroll">
         <DialogPrimitive.Close

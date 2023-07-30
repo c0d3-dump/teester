@@ -37,6 +37,11 @@ interface RemoveFakerPayloadInterface {
   fakerId: number;
 }
 interface UpdateFakerPayloadInterface {
+  data: FakerContainerModel;
+  projectId: number;
+  fakerId: number;
+}
+interface UpdateFillFakerPayloadInterface {
   projectId: number;
   fakerId: number;
   data: FakerModel[];
@@ -50,6 +55,11 @@ interface RemoveUiPayloadInterface {
   uiId: number;
 }
 interface UpdateUiPayloadInterface {
+  projectId: number;
+  uiId: number;
+  data: UiContainerModel;
+}
+interface UpdateUiTestsPayloadInterface {
   projectId: number;
   uiId: number;
   data: UiTestModel[];
@@ -332,6 +342,30 @@ export const projectSlice = createSlice({
       state.value = state.value.map((proj, idx) => {
         if (idx === payload.projectId) {
           const tempProj = { ...proj };
+          tempProj.fakers = tempProj.fakers.map((col, jdx) => {
+            if (jdx === payload.fakerId) {
+              return { data: col.data, name: payload.data.name };
+            } else {
+              return col;
+            }
+          });
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    updateFillFaker(
+      state,
+      { payload }: { payload: UpdateFillFakerPayloadInterface }
+    ) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
 
           tempProj.fakers = tempProj.fakers.map((col, jdx) => {
             if (jdx === payload.fakerId) {
@@ -390,6 +424,35 @@ export const projectSlice = createSlice({
           tempProj.uis = tempProj.uis.map((col, jdx) => {
             if (jdx === payload.uiId) {
               return {
+                name: payload.data.name,
+                screenshots: payload.data.screenshots,
+                data: col.data,
+              };
+            } else {
+              return col;
+            }
+          });
+          return tempProj;
+        } else {
+          return proj;
+        }
+      });
+
+      setProjects(state.value).catch((err) => {
+        console.log(err);
+      });
+    },
+    updateUiTests(
+      state,
+      { payload }: { payload: UpdateUiTestsPayloadInterface }
+    ) {
+      state.value = state.value.map((proj, idx) => {
+        if (idx === payload.projectId) {
+          const tempProj = { ...proj };
+
+          tempProj.uis = tempProj.uis.map((col, jdx) => {
+            if (jdx === payload.uiId) {
+              return {
                 name: col.name,
                 screenshots: col.screenshots,
                 data: payload.data,
@@ -425,10 +488,12 @@ export const {
   refreshCollection,
   addFaker,
   removeFaker,
+  updateFillFaker,
   updateFaker,
   addUi,
   removeUi,
   updateUi,
+  updateUiTests,
 } = projectSlice.actions;
 
 export const selectProject = (state: RootState) => state.project.value;

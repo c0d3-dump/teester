@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Play, Plus, Trash2, X } from "lucide-react";
+import { Edit, Play, Plus, Trash2, X } from "lucide-react";
 
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { Card, CardHeader, CardTitle } from "../ui/card";
+import { Card } from "../ui/card";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "../ui/button";
@@ -32,6 +32,7 @@ import {
   addFaker,
   removeFaker,
   selectProject,
+  updateFaker,
 } from "src/redux/reducers/project";
 import FillFakerComponent from "./FillFaker";
 import { generateSql, runQuery } from "src/utils";
@@ -45,6 +46,10 @@ export default function Faker() {
   const params = useParams();
   const projectId = parseInt(params.projectId ?? "-1");
 
+  useEffect(() => {
+    dispatch(setCollectionName(projects[projectId].name));
+  }, [dispatch, projectId, projects]);
+
   const onDeleteClicked = useCallback(
     (idx: number) => {
       dispatch(removeFaker({ projectId: projectId, fakerId: idx }));
@@ -52,17 +57,15 @@ export default function Faker() {
     [dispatch, projectId]
   );
 
-  useEffect(() => {
-    dispatch(setCollectionName(projects[projectId].name));
-  }, [dispatch, projectId, projects]);
-
   return (
     <div className="my-8 w-full">
       {projects[projectId].fakers.map((faker, idx) => (
         <Card className="my-auto flex justify-between mb-4" key={idx}>
-          <CardHeader className="w-full rounded-lg">
-            <CardTitle>{faker.name}</CardTitle>
-          </CardHeader>
+          <FillFakerComponent
+            projectId={projectId}
+            faker={faker}
+            fakerId={idx}
+          ></FillFakerComponent>
 
           <div className="flex align-middle">
             <RunFakerComponent
@@ -71,11 +74,13 @@ export default function Faker() {
               faker={faker}
             ></RunFakerComponent>
 
-            <FillFakerComponent
+            <AddEditFakerComponent
+              type="EDIT"
               projectId={projectId}
-              faker={faker}
-              fakerId={idx}
-            ></FillFakerComponent>
+              idx={idx}
+              data={faker}
+              key={idx}
+            ></AddEditFakerComponent>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -105,25 +110,37 @@ export default function Faker() {
         </Card>
       ))}
 
-      <AddFakerComponent projectId={projectId}></AddFakerComponent>
+      <AddEditFakerComponent
+        type="ADD"
+        projectId={projectId}
+      ></AddEditFakerComponent>
     </div>
   );
 }
 
-interface AddFakerComponentProps {
+interface AddEditFakerComponentProps {
+  type: "ADD" | "EDIT";
   projectId: number;
+  idx?: number;
+  data?: FakerContainerModel;
 }
 
-function AddFakerComponent(props: AddFakerComponentProps) {
+function AddEditFakerComponent(props: AddEditFakerComponentProps) {
   const [dialogState, setDialogState] = useState(false);
-  const { register, formState, getValues, reset } = useForm();
+  const { register, formState, getValues, reset, setValue } = useForm();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!dialogState) {
+    if (props.type === "ADD" && !dialogState) {
       reset();
     }
-  }, [dialogState, reset]);
+  }, [dialogState, props.type, reset]);
+
+  useEffect(() => {
+    if (props.type === "EDIT") {
+      setValue("name", props.data?.name ?? "");
+    }
+  }, [props.data, props.type, setValue]);
 
   const onAddClick = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -138,7 +155,10 @@ function AddFakerComponent(props: AddFakerComponentProps) {
           data: [],
         };
         dispatch(
-          addFaker({ projectId: props.projectId, data: newFakerContainer })
+          addFaker({
+            projectId: props.projectId,
+            data: newFakerContainer,
+          })
         );
 
         setDialogState(false);
@@ -147,15 +167,56 @@ function AddFakerComponent(props: AddFakerComponentProps) {
     [dispatch, formState.isValid, getValues, props.projectId]
   );
 
+  const onUpdateClick = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      const formData = getValues();
+      const isValid = formState.isValid;
+
+      if (isValid) {
+        const newFakerContainer: FakerContainerModel = {
+          name: formData.name,
+          data: props.data?.data ?? [],
+        };
+        dispatch(
+          updateFaker({
+            projectId: props.projectId,
+            data: newFakerContainer,
+            fakerId: props.idx ?? -1,
+          })
+        );
+
+        setDialogState(false);
+      }
+    },
+    [
+      dispatch,
+      formState.isValid,
+      getValues,
+      props.data?.data,
+      props.idx,
+      props.projectId,
+    ]
+  );
+
   return (
     <Dialog open={dialogState}>
       <Button
-        className="fixed right-[24px] bottom-[24px] z-100 p-4"
+        className={
+          props.type === "ADD"
+            ? "fixed right-[24px] bottom-[24px] z-100 p-4"
+            : "p-2 my-auto ml-2"
+        }
         size="xs"
-        variant="secondary"
+        variant={props.type === "ADD" ? "secondary" : "ghost"}
         onClick={() => setDialogState(true)}
       >
-        <Plus color="#ffffff"></Plus>
+        {props.type === "ADD" ? (
+          <Plus color="#ffffff"></Plus>
+        ) : (
+          <Edit color="#ffffff"></Edit>
+        )}
       </Button>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -168,10 +229,17 @@ function AddFakerComponent(props: AddFakerComponentProps) {
         </DialogPrimitive.Close>
 
         <DialogHeader>
-          <DialogTitle>Add Faker</DialogTitle>
+          <DialogTitle>
+            {props.type === "ADD" ? "Add" : "Edit"} Faker
+          </DialogTitle>
         </DialogHeader>
 
-        <form className="grid gap-4 py-4" onSubmit={(e) => onAddClick(e)}>
+        <form
+          className="grid gap-4 py-4"
+          onSubmit={(e) =>
+            props.type === "ADD" ? onAddClick(e) : onUpdateClick(e)
+          }
+        >
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
               Name
