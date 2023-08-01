@@ -10,20 +10,6 @@ import (
 	"github.com/go-rod/rod/lib/proto"
 )
 
-// type RodEvent uint8
-
-// const (
-// 	Nothing RodEvent = iota
-// 	Wait
-// 	LeftMouseClick
-// 	RightMouseClick
-// 	Enter
-// 	Tab
-// 	Space
-// 	Ctrl
-// 	Alt
-// )
-
 type Uis struct {
 	Selector string `json:"selector"`
 	Input    string `json:"input"`
@@ -101,5 +87,17 @@ func RunTest(page *rod.Page, test *Uis) {
 		}
 	case "Enter":
 		page.KeyActions().Press(input.Enter).MustDo()
+	case "Tab":
+		page.KeyActions().Press(input.Tab).MustDo()
+	case "Space":
+		page.KeyActions().Press(input.Space).MustDo()
+	case "Backspace":
+		page.KeyActions().Press(input.Backspace).MustDo()
+	case "Esc":
+		page.KeyActions().Press(input.Escape).MustDo()
+	case "PgDown":
+		page.KeyActions().Press(input.PageDown).MustDo()
+	case "PgUp":
+		page.KeyActions().Press(input.PageUp).MustDo()
 	}
 }

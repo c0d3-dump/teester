@@ -69,8 +69,10 @@ export const UiEvent = [
   "Enter",
   "Tab",
   "Space",
-  "Ctrl",
-  "Alt",
+  "Backspace",
+  "Esc",
+  "PgDown",
+  "PgUp"
 ];
 
 export interface AssertionModel {
