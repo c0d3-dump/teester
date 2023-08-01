@@ -40,7 +40,7 @@ import {
 } from "src/redux/reducers/project";
 import { useParams } from "react-router-dom";
 import { setCollectionName } from "src/redux/reducers/app";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { ScrollArea } from "../ui/scroll-area";
 import Select from "react-select";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
 import * as z from "zod";
