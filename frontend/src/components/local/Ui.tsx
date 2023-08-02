@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-
 import { Play, Plus, Trash2, X, Edit, Save } from "lucide-react";
+import CreatableSelect from "react-select/creatable";
 
 import {
   Dialog,
@@ -16,6 +16,7 @@ import { Button } from "../ui/button";
 import {
   UiContainerModel,
   UiEvent,
+  UiInput,
   UiTestModel,
 } from "src/redux/models/project";
 import {
@@ -417,14 +418,32 @@ function FillUiComponent(props: FillUiComponentProps) {
                   placeholder="Selector"
                 ></Input>
 
-                <Input
-                  value={uiTest.input}
-                  type="text"
+                <CreatableSelect
+                  className="w-full"
+                  theme={(theme) => ({
+                    ...theme,
+                    borderRadius: 4,
+                    colors: {
+                      ...theme.colors,
+                      primary: "#1d283a",
+                      neutral0: "#030711",
+                      primary25: "#0d1324",
+                      neutral20: "#1d283a",
+                      neutral30: "#1d283a",
+                      neutral80: "#ffffff",
+                    },
+                  })}
+                  value={{ value: uiTest.input, label: uiTest.input }}
                   onChange={(event) =>
-                    onUiDataChange(idx, { input: event.target.value })
+                    onUiDataChange(idx, {
+                      input: UiInput.includes(event?.value as string)
+                        ? `$\{${event?.value}}`
+                        : event?.value,
+                    })
                   }
+                  options={UiInput.map((val) => ({ value: val, label: val }))}
                   placeholder="Input"
-                ></Input>
+                ></CreatableSelect>
 
                 <Select
                   className="w-full"

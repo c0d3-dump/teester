@@ -61,9 +61,25 @@ export interface UiTestModel {
   event: string;
 }
 
+export const UiInput = [
+  "Email",
+  "Name",
+  "Phone",
+  "Color",
+  "Company",
+  "HackerPhrase",
+  "CurrencyShort",
+  "Sentence",
+  "Number",
+  "BeerName",
+  "UUID",
+  "URL",
+  "Emoji",
+  "Date"
+];
+
 export const UiEvent = [
   "Nothing",
-  "Wait",
   "LeftMouseClick",
   "RightMouseClick",
   "Enter",

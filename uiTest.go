@@ -1,9 +1,10 @@
 package main
 
 import (
+	"regexp"
 	"strconv"
-	"time"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/input"
 	"github.com/go-rod/rod/lib/launcher"
@@ -55,7 +56,6 @@ func (m *UiProject) Run(uiId int) {
 		}
 	}
 
-	time.Sleep(time.Second)
 	browser.MustClose()
 }
 
@@ -65,19 +65,18 @@ func RunTest(page *rod.Page, test *Uis) {
 		el = page.MustElement(test.Selector)
 	}
 
-	if test.Input != "" {
-		el.MustInput(test.Input)
+	if test.Input != "" || test.Event != "Wait" {
+		fakeData := FakeData(test.Input)
+		if fakeData == "" {
+			el.MustInput(test.Input)
+		} else {
+			el.MustInput(fakeData)
+		}
 	}
 
 	switch test.Event {
 	case "Nothing":
 		// do nothing!
-	case "Wait":
-		duration, err := strconv.Atoi(test.Input)
-		if err != nil {
-			panic(err)
-		}
-		page.WaitIdle(time.Second * time.Duration(duration))
 	case "LeftMouseClick":
 		el.MustClick()
 	case "RightMouseClick":
@@ -108,4 +107,45 @@ func RunTest(page *rod.Page, test *Uis) {
 	case "ArrowRight":
 		page.KeyActions().Press(input.ArrowRight).MustDo()
 	}
+}
+
+func FakeData(input string) string {
+	pattern := "\\${(.*?)}"
+
+	re := regexp.MustCompile(pattern)
+	match := re.FindStringSubmatch(input)
+
+	if len(match) > 1 {
+		switch match[1] {
+		case "Email":
+			return gofakeit.Email()
+		case "Name":
+			return gofakeit.Name()
+		case "Phone":
+			return gofakeit.Phone()
+		case "Color":
+			return gofakeit.Color()
+		case "Company":
+			return gofakeit.Company()
+		case "HackerPhrase":
+			return gofakeit.HackerPhrase()
+		case "CurrencyShort":
+			return gofakeit.CurrencyShort()
+		case "Sentence":
+			return gofakeit.Sentence(99)
+		case "Number":
+			return strconv.Itoa(gofakeit.Number(1, 50))
+		case "BeerName":
+			return gofakeit.BeerName()
+		case "UUID":
+			return gofakeit.UUID()
+		case "URL":
+			return gofakeit.URL()
+		case "Emoji":
+			return gofakeit.Emoji()
+		case "Date":
+			return gofakeit.Date().Format("2006-01-02 15:04:05")
+		}
+	}
+	return ""
 }
