@@ -99,5 +99,13 @@ func RunTest(page *rod.Page, test *Uis) {
 		page.KeyActions().Press(input.PageDown).MustDo()
 	case "PgUp":
 		page.KeyActions().Press(input.PageUp).MustDo()
+	case "ArrowUp":
+		page.KeyActions().Press(input.ArrowUp).MustDo()
+	case "ArrowDown":
+		page.KeyActions().Press(input.ArrowDown).MustDo()
+	case "ArrowLeft":
+		page.KeyActions().Press(input.ArrowLeft).MustDo()
+	case "ArrowRight":
+		page.KeyActions().Press(input.ArrowRight).MustDo()
 	}
 }

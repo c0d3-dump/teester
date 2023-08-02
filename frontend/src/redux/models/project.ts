@@ -72,7 +72,11 @@ export const UiEvent = [
   "Backspace",
   "Esc",
   "PgDown",
-  "PgUp"
+  "PgUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
 ];
 
 export interface AssertionModel {
