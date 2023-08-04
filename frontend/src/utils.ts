@@ -96,6 +96,13 @@ export const runUiTest = async (projectId: number, uiId: number) => {
   });
 };
 
+export const captureEvents = async (projectId: number, uiId: number) => {
+  return axios.post(`${env.SERVER_URL}/capture-me`, {
+    projectId,
+    uiId,
+  });
+};
+
 export const isDeepEqual = (targetObj: any, sourceObj: any) => {
   if (typeof targetObj !== "object" || typeof sourceObj !== "object") {
     if (typeof targetObj === "string" && targetObj.match(/@\{(.*?)\}/))

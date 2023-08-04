@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Play, Plus, Trash2, X, Edit, Save } from "lucide-react";
+import { Play, Plus, Trash2, X, Edit, Save, Camera } from "lucide-react";
 import CreatableSelect from "react-select/creatable";
 
 import {
@@ -47,7 +47,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "../ui/switch";
-import { runUiTest } from "src/utils";
+import { captureEvents, runUiTest } from "src/utils";
+import { Label } from "../ui/label";
 
 export default function Ui() {
   const projects = useAppSelector(selectProject);
@@ -70,7 +71,20 @@ export default function Ui() {
     async (uiId: number) => {
       try {
         await runUiTest(projectId, uiId);
-      } catch (error) {}
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [projectId]
+  );
+
+  const onCaptureClicked = useCallback(
+    async (uiId: number) => {
+      try {
+        await captureEvents(projectId, uiId);
+      } catch (error) {
+        console.log(error);
+      }
     },
     [projectId]
   );
@@ -131,6 +145,10 @@ export default function Ui() {
         </Card>
       ))}
 
+      <CaptureUiComponent
+        uiList={projects[projectId].uis}
+        captureEvents={onCaptureClicked}
+      ></CaptureUiComponent>
       <AddEditUiComponent type="ADD" projectId={projectId}></AddEditUiComponent>
     </div>
   );
@@ -501,6 +519,96 @@ function FillUiComponent(props: FillUiComponentProps) {
         >
           <Plus color="#ffffff"></Plus>
         </Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface CaptureUiComponentProps {
+  uiList?: UiContainerModel[];
+  captureEvents?: (uiId: number) => Promise<void>;
+}
+
+function CaptureUiComponent(props: CaptureUiComponentProps) {
+  const [dialogState, setDialogState] = useState(false);
+  const [selectedUi, setSelectedUi] = useState("");
+
+  useEffect(() => {
+    if (!dialogState) {
+      setSelectedUi("");
+    }
+  }, [dialogState]);
+
+  const onCaptureClicked = useCallback(() => {
+    props.captureEvents?.(parseInt(selectedUi));
+    setDialogState(false);
+  }, [props, selectedUi]);
+
+  return (
+    <Dialog open={dialogState}>
+      <Button
+        className="fixed right-[24px] bottom-[96px] z-100 p-4"
+        size="xs"
+        variant="secondary"
+        onClick={() => setDialogState(true)}
+      >
+        <Camera color="#ffffff"></Camera>
+      </Button>
+
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogPrimitive.Close
+          onClick={() => setDialogState(false)}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+        <DialogHeader>
+          <DialogTitle>Capture Ui</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="collection" className="text-right">
+            Ui
+          </Label>
+          <Select
+            className="col-span-3"
+            theme={(theme) => ({
+              ...theme,
+              borderRadius: 4,
+              colors: {
+                ...theme.colors,
+                primary: "#1d283a",
+                neutral0: "#030711",
+                primary25: "#0d1324",
+                neutral20: "#1d283a",
+                neutral30: "#1d283a",
+                neutral80: "#ffffff",
+              },
+            })}
+            value={{
+              value: selectedUi,
+              label: selectedUi
+                ? props.uiList?.[parseInt(selectedUi)].name
+                : "",
+            }}
+            onChange={(event) => setSelectedUi(event?.value ?? "")}
+            options={props.uiList?.map((col, idx) => ({
+              value: idx.toString(),
+              label: col.name,
+            }))}
+            isSearchable={true}
+          ></Select>
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="submit"
+            disabled={!selectedUi}
+            onClick={() => onCaptureClicked()}
+          >
+            Submit
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

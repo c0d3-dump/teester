@@ -321,7 +321,7 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
         variant="secondary"
         onClick={() => setDialogState(true)}
       >
-        <RenderIcon></RenderIcon>
+        <RenderIcon />
       </Button>
 
       <DialogContent className="sm:max-w-[425px]">

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/go-rod/rod/lib/input"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
+	"github.com/ysmood/gson"
 )
 
 type Uis struct {
@@ -30,6 +32,41 @@ type UiTest struct {
 	Name        string `json:"name"`
 	Screenshots bool   `json:"screenshots"`
 	Data        []Uis  `json:"data"`
+}
+
+func (m *UiProject) CaptureEvents(uiId int) {
+	l := launcher.New().Headless(false)
+	u := l.MustLaunch()
+
+	browser := rod.New().ControlURL(u).MustConnect().MustIncognito().Trace(true).Sleeper(rod.NotFoundSleeper)
+
+	page := browser.MustPage(m.Config.Host)
+	page.MustWindowMaximize().MustWaitStable()
+
+	eventQuery := `
+		() => {
+			document.addEventListener('click', 
+			(e) => teesterClicked(
+				{ 
+					tag: e.target.tagName,
+					id: e.target.id,
+					class: e.target.class
+				})
+			)
+		}
+	`
+
+	page.MustEval("() => { document.addEventListener('click', (e) => console.log(e.target)) }")
+
+	page.MustExpose("captureMe", func(v gson.JSON) (interface{}, error) {
+		page.MustEval(eventQuery)
+		return nil, nil
+	})
+
+	page.MustExpose("teesterClicked", func(v gson.JSON) (interface{}, error) {
+		fmt.Println(v.Str())
+		return nil, nil
+	})
 }
 
 func (m *UiProject) Run(uiId int) {
