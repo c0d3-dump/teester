@@ -35,7 +35,7 @@ type UiTest struct {
 }
 
 func (m *UiProject) CaptureEvents(uiId int) {
-	l := launcher.New().Headless(false)
+	l := launcher.New().Headless(false).Leakless(true).UserDataDir("")
 	u := l.MustLaunch()
 
 	browser := rod.New().ControlURL(u).MustConnect().MustIncognito().Trace(true).Sleeper(rod.NotFoundSleeper)
@@ -50,13 +50,15 @@ func (m *UiProject) CaptureEvents(uiId int) {
 				{ 
 					tag: e.target.tagName,
 					id: e.target.id,
-					class: e.target.class
+					class: e.target.classList,
+					innerText: e.target.innerText,
+					title: e.target.title
 				})
 			)
 		}
 	`
 
-	page.MustEval("() => { document.addEventListener('click', (e) => console.log(e.target)) }")
+	page.MustEval("() => { document.addEventListener('click', (e) => console.log(e)) }")
 
 	page.MustExpose("captureMe", func(v gson.JSON) (interface{}, error) {
 		page.MustEval(eventQuery)
@@ -70,7 +72,7 @@ func (m *UiProject) CaptureEvents(uiId int) {
 }
 
 func (m *UiProject) Run(uiId int) {
-	l := launcher.New().Headless(false)
+	l := launcher.New().Headless(false).Leakless(true).UserDataDir("")
 	u := l.MustLaunch()
 
 	browser := rod.New().ControlURL(u).MustConnect().MustIncognito().Trace(true).Sleeper(rod.NotFoundSleeper)
