@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Edit, X, ClipboardCopy, ClipboardPaste } from "lucide-react";
+import { Edit, X, ClipboardCopy, ClipboardPaste, Plus } from "lucide-react";
 
 import {
   Dialog,
@@ -21,12 +21,12 @@ import { Button } from "../ui/button";
 import { ApiModel, DbModel } from "src/redux/models/project";
 import { addTest, updateTest } from "src/redux/reducers/project";
 import { Textarea } from "../ui/textarea";
-import { useParams } from "react-router-dom";
 import { clearTester } from "src/redux/reducers/tester";
 import { toast } from "react-toastify";
 
 interface AddEditTestComponentProps {
   type: "ADD" | "EDIT";
+  projectId: number;
   collectionId: number;
   testId?: number;
   test?: ApiModel | DbModel;
@@ -69,13 +69,21 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
   return (
     <Dialog open={dialogState}>
       <Button
-        className="p-2 my-auto ml-2"
+        className={
+          props.type === "ADD"
+            ? "fixed right-[24px] bottom-[24px] z-100 p-4"
+            : "p-2 my-auto ml-2"
+        }
         size="xs"
-        variant={props.type === "ADD" ? "default" : "ghost"}
+        variant={props.type === "ADD" ? "secondary" : "ghost"}
         type="button"
         onClick={() => setDialogState(true)}
       >
-        {props.type === "ADD" ? "ADD" : <Edit></Edit>}
+        {props.type === "ADD" ? (
+          <Plus color="#ffffff"></Plus>
+        ) : (
+          <Edit color="lightgrey"></Edit>
+        )}
       </Button>
 
       <DialogContent className="sm:max-w-[896px] max-h-[90%] block overflow-y-scroll">
@@ -133,6 +141,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
               <CardContent className="space-y-2">
                 <ApiTestComponent
                   type={props.type}
+                  projectId={props.projectId}
                   collectionId={props.collectionId}
                   dialogState={dialogState}
                   setDialogState={setDialogState}
@@ -147,6 +156,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
               <CardContent className="space-y-2">
                 <DbTestComponent
                   type={props.type}
+                  projectId={props.projectId}
                   collectionId={props.collectionId}
                   dialogState={dialogState}
                   setDialogState={setDialogState}
@@ -164,6 +174,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
 
 interface TestComponentProps {
   type: "ADD" | "EDIT";
+  projectId: number;
   collectionId: number;
   testId?: number;
   test?: ApiModel | DbModel;
@@ -174,8 +185,6 @@ interface TestComponentProps {
 function ApiTestComponent(props: TestComponentProps) {
   const { setValue, register, formState, getValues } = useForm();
   const dispatch = useAppDispatch();
-  const params = useParams();
-  const projectId = parseInt(params.projectId ?? "-1");
 
   useEffect(() => {
     if (props.type === "EDIT" || props.test) {
@@ -213,7 +222,7 @@ function ApiTestComponent(props: TestComponentProps) {
 
         dispatch(
           addTest({
-            projectId,
+            projectId: props.projectId,
             collectionId: props.collectionId,
             data: newTest,
           })
@@ -221,7 +230,7 @@ function ApiTestComponent(props: TestComponentProps) {
         props.setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, projectId, props]
+    [dispatch, formState.isValid, getValues, props]
   );
 
   const onUpdateClicked = useCallback(
@@ -247,7 +256,7 @@ function ApiTestComponent(props: TestComponentProps) {
 
         dispatch(
           updateTest({
-            projectId,
+            projectId: props.projectId,
             collectionId: props.collectionId,
             testId: props.testId ?? -1,
             data: updatedTest,
@@ -256,7 +265,7 @@ function ApiTestComponent(props: TestComponentProps) {
         props.setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, projectId, props]
+    [dispatch, formState.isValid, getValues, props]
   );
 
   return (
@@ -344,8 +353,6 @@ function ApiTestComponent(props: TestComponentProps) {
 function DbTestComponent(props: TestComponentProps) {
   const { setValue, register, formState, getValues } = useForm();
   const dispatch = useAppDispatch();
-  const params = useParams();
-  const projectId = parseInt(params.projectId ?? "-1");
 
   useEffect(() => {
     if (props.type === "EDIT" || props.test) {
@@ -371,7 +378,7 @@ function DbTestComponent(props: TestComponentProps) {
 
         dispatch(
           addTest({
-            projectId,
+            projectId: props.projectId,
             collectionId: props.collectionId,
             data: newTest,
           })
@@ -379,7 +386,7 @@ function DbTestComponent(props: TestComponentProps) {
         props.setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, projectId, props]
+    [dispatch, formState.isValid, getValues, props]
   );
 
   const onUpdateClicked = useCallback(
@@ -398,7 +405,7 @@ function DbTestComponent(props: TestComponentProps) {
 
         dispatch(
           updateTest({
-            projectId,
+            projectId: props.projectId,
             collectionId: props.collectionId,
             testId: props.testId ?? -1,
             data: updatedTest,
@@ -407,7 +414,7 @@ function DbTestComponent(props: TestComponentProps) {
         props.setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, projectId, props]
+    [dispatch, formState.isValid, getValues, props]
   );
 
   return (

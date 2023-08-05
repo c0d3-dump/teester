@@ -48,13 +48,9 @@ import {
   runApi,
   runQuery,
 } from "src/utils";
+import { setCollectionName } from "src/redux/reducers/app";
 
-interface TestsProps {
-  tests: (ApiModel | DbModel)[];
-  collectionId: number;
-}
-
-export default function TestComponent(props: TestsProps) {
+export default function TestComponent() {
   const dispatch = useAppDispatch();
   const testers = useAppSelector(selectTester);
   const [testListState, setTestListState] = useState<(ApiModel | DbModel)[]>(
@@ -63,10 +59,19 @@ export default function TestComponent(props: TestsProps) {
   const [dimState, setDimState] = useState(-1);
   const params = useParams();
   const projectId = parseInt(params.projectId ?? "-1");
+  const collectionId = parseInt(params.collectionId ?? "-1");
+  const projects = useAppSelector(selectProject);
 
   useEffect(() => {
-    setTestListState(props.tests);
-  }, [props.tests, testListState.length]);
+    dispatch(
+      setCollectionName(projects[projectId].collections[collectionId].name)
+    );
+  }, [collectionId, dispatch, projectId, projects]);
+
+  useEffect(() => {
+    const tests = projects[projectId].collections[collectionId].tests;
+    setTestListState(tests);
+  }, [collectionId, projectId, projects, testListState.length]);
 
   const onDeleteClicked = useCallback(
     (testId: number) => {
@@ -75,31 +80,29 @@ export default function TestComponent(props: TestsProps) {
       dispatch(
         removeTest({
           projectId,
-          collectionId: props.collectionId,
+          collectionId,
           testId,
         })
       );
     },
-    [dispatch, projectId, props.collectionId]
+    [dispatch, projectId, collectionId]
   );
 
   const isPresent = useCallback(
     (testId: number) =>
       testers.findIndex(
-        (t) => t.collectionId === props.collectionId && t.testId === testId
+        (t) => t.collectionId === collectionId && t.testId === testId
       ) > -1,
-    [props.collectionId, testers]
+    [collectionId, testers]
   );
 
   const isAsserted = useCallback(
     (testId: number) =>
       testers.findIndex(
         (t) =>
-          t.collectionId === props.collectionId &&
-          t.testId === testId &&
-          t.assert
+          t.collectionId === collectionId && t.testId === testId && t.assert
       ) > -1,
-    [props.collectionId, testers]
+    [collectionId, testers]
   );
 
   const dragItem = useRef<number | null>(null);
@@ -140,23 +143,20 @@ export default function TestComponent(props: TestsProps) {
       dispatch(
         refreshCollection({
           projectId,
-          collectionId: props.collectionId,
+          collectionId,
           data: list,
         })
       );
     },
-    [dispatch, handleSort, projectId, props.collectionId]
+    [dispatch, handleSort, projectId, collectionId]
   );
-
-  const projects = useAppSelector(selectProject);
 
   const runSingleTest = useCallback(
     async (testId: number) => {
       dispatch(clearTester());
 
       const config = projects[projectId].config;
-      const test =
-        projects[projectId].collections[props.collectionId].tests[testId];
+      const test = projects[projectId].collections[collectionId].tests[testId];
 
       let variables = {};
 
@@ -213,7 +213,7 @@ export default function TestComponent(props: TestsProps) {
 
         dispatch(
           addTester({
-            collectionId: props.collectionId,
+            collectionId,
             testId: testId,
             assert: assertValue,
             status: res.status,
@@ -230,98 +230,110 @@ export default function TestComponent(props: TestsProps) {
 
         dispatch(
           addTester({
-            collectionId: props.collectionId,
+            collectionId,
             testId: testId,
             assert: assertValue,
           })
         );
       }
     },
-    [dispatch, projectId, projects, props.collectionId]
+    [dispatch, projectId, projects, collectionId]
   );
 
   return (
     <>
-      {props.tests.map((test, idx) => (
-        <Card
-          draggable
-          onDragStart={() => onDragStart(idx)}
-          onDragEnter={() => onDragEnter(idx)}
-          onDragEnd={onDragEnd}
-          onDragOver={onDragOver}
-          className={`my-auto flex justify-between mb-4 rounded-none ${
-            isPresent(idx)
-              ? isAsserted(idx)
-                ? "border-green-500"
-                : "border-red-500"
-              : ""
-          } ${dimState === idx ? "border-yellow-400" : ""}`}
-          key={idx}
-        >
-          <CardHeader onClick={() => {}} className="cursor-pointer w-full">
-            <CardTitle className="flex gap-2">
-              {(test as ApiModel).methodType ? (
-                <Globe2></Globe2>
-              ) : (
-                <Database></Database>
+      <div className="my-8">
+        {testListState.map((test, idx) => (
+          <Card
+            draggable
+            onDragStart={() => onDragStart(idx)}
+            onDragEnter={() => onDragEnter(idx)}
+            onDragEnd={onDragEnd}
+            onDragOver={onDragOver}
+            className={`my-auto flex justify-between mb-4 ${
+              isPresent(idx)
+                ? isAsserted(idx)
+                  ? "border-green-500"
+                  : "border-red-500"
+                : ""
+            } ${dimState === idx ? "border-yellow-400" : ""}`}
+            key={idx}
+          >
+            <CardHeader onClick={() => {}} className="cursor-pointer w-full">
+              <CardTitle className="flex gap-2">
+                {(test as ApiModel).methodType ? (
+                  <Globe2 size={18}></Globe2>
+                ) : (
+                  <Database size={18}></Database>
+                )}
+                {test.name}
+              </CardTitle>
+            </CardHeader>
+
+            <div className="flex align-middle">
+              {(test as ApiModel).methodType && isPresent(idx) && (
+                <DiffResultComponent
+                  collectionId={collectionId}
+                  test={test as ApiModel}
+                  testId={idx}
+                ></DiffResultComponent>
               )}
-              {test.name}
-            </CardTitle>
-          </CardHeader>
-          <div className="flex align-middle">
-            {(test as ApiModel).methodType && isPresent(idx) && (
-              <DiffResultComponent
-                collectionId={props.collectionId}
-                test={test as ApiModel}
+              <Button
+                type="button"
+                variant="ghost"
+                className="p-2 my-auto mx-2"
+                size="xs"
+                onClick={() => runSingleTest(idx)}
+              >
+                <Play color="lightgreen"></Play>
+              </Button>
+
+              <AddEditTestComponent
+                type="EDIT"
+                projectId={projectId}
+                collectionId={collectionId}
+                test={test}
                 testId={idx}
-              ></DiffResultComponent>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              className="p-2 my-auto"
-              size="xs"
-              onClick={() => runSingleTest(idx)}
-            >
-              <Play></Play>
-            </Button>
-            <AddEditTestComponent
-              type="EDIT"
-              collectionId={props.collectionId}
-              test={test}
-              testId={idx}
-            ></AddEditTestComponent>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="xs"
-                  variant="secondary"
-                  className="p-2 my-auto mx-2"
-                >
-                  <Trash2></Trash2>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    Do you really want to delete Test?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    your Test.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onDeleteClicked(idx)}>
-                    Continue
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </Card>
-      ))}
+              ></AddEditTestComponent>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    className="p-2 my-auto mx-2"
+                  >
+                    <Trash2 color="rgb(239 68 68)"></Trash2>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Do you really want to delete Test?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      your Test.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDeleteClicked(idx)}>
+                      Continue
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <AddEditTestComponent
+        type="ADD"
+        projectId={projectId}
+        collectionId={collectionId}
+      ></AddEditTestComponent>
     </>
   );
 }

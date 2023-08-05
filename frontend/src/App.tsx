@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { selectApp, setCollectionName } from "./redux/reducers/app";
 import Faker from "./components/local/Faker";
 import Ui from "./components/local/Ui";
+import Test from "./components/local/Test";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -27,6 +28,10 @@ function App() {
     {
       path: "/:projectId",
       Component: Collection,
+    },
+    {
+      path: "/:projectId/:collectionId",
+      Component: Test,
     },
     {
       path: "/faker/:projectId",

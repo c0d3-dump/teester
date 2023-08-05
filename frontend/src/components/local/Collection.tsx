@@ -1,22 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../ui/accordion";
-import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import Select from "react-select";
 import { Button } from "../ui/button";
-import { Edit, Play, Plus, X } from "lucide-react";
+import { Edit, Play, Plus, Trash2, X } from "lucide-react";
 
-import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
@@ -28,8 +20,6 @@ import {
   updateCollection,
 } from "src/redux/reducers/project";
 import { ApiModel, CollectionModel, DbModel } from "src/redux/models/project";
-import AddEditTestComponent from "./AddEditTest";
-import TestComponent from "./Test";
 import {
   isDeepEqual,
   runApi,
@@ -38,14 +28,30 @@ import {
   replaceTokens,
 } from "src/utils";
 import { addTester, clearTester } from "src/redux/reducers/tester";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { setCollectionName } from "src/redux/reducers/app";
+import { Card, CardHeader, CardTitle } from "../ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
 
 export default function Collection() {
   const projects = useAppSelector(selectProject);
   const dispatch = useAppDispatch();
   const params = useParams();
   const projectId = parseInt(params.projectId ?? "-1");
+  const navigate = useNavigate();
 
   const onDeleteClicked = (idx: number) => {
     dispatch(clearTester());
@@ -155,77 +161,119 @@ export default function Collection() {
     [dispatch, projectId, projects]
   );
 
+  const goToTest = (collectionId: number) => {
+    navigate(`/${projectId}/${collectionId}`);
+  };
+
   return (
     <>
       <div className="my-8">
-        <Accordion type="single" collapsible className="w-full">
-          {projects[projectId].collections.map((col, idx) => {
-            return (
-              <AccordionItem value={col.name} className="mb-4" key={idx}>
-                <AccordionTrigger onDelete={() => onDeleteClicked(idx)}>
-                  {col.name}
-                </AccordionTrigger>
-                <AccordionContent>
-                  <TestComponent
-                    tests={col.tests}
-                    collectionId={idx}
-                    key={idx}
-                  ></TestComponent>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
+        {projects[projectId].collections.map((col, idx) => {
+          return (
+            <Card className="my-auto flex justify-between mb-4" key={idx}>
+              <CardHeader
+                onClick={() => goToTest(idx)}
+                className="cursor-pointer hover:bg-[#050b1a] w-full rounded-lg"
+              >
+                <CardTitle>{col.name}</CardTitle>
+              </CardHeader>
+
+              <div className="flex align-middle">
+                <Button
+                  className="p-2 my-auto mx-2"
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => runTests(idx)}
+                >
+                  <Play color="lightgreen"></Play>
+                </Button>
+
+                <AddEditCollectionComponent
+                  type="EDIT"
+                  projectId={projectId}
+                  collection={col}
+                  collectionId={idx}
+                ></AddEditCollectionComponent>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      className="p-2 my-auto mx-2"
+                    >
+                      <Trash2 color="rgb(239 68 68)"></Trash2>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Do you really want to delete Collection?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently
+                        delete your Collection.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onDeleteClicked(idx)}>
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       <AddEditCollectionComponent
-        type="RUN"
-        collectionList={projects[projectId].collections}
-        runTests={runTests}
+        type="ADD"
+        projectId={projectId}
       ></AddEditCollectionComponent>
-      <AddEditCollectionComponent
-        type="EDIT"
-        collectionList={projects[projectId].collections}
-      ></AddEditCollectionComponent>
-      <AddEditCollectionComponent type="ADD"></AddEditCollectionComponent>
     </>
   );
 }
 
 interface AddEditCollectionComponentProps {
-  type: "ADD" | "EDIT" | "RUN";
-  collectionList?: CollectionModel[];
-  runTests?: (collectionId: number) => Promise<void>;
+  type: "ADD" | "EDIT";
+  projectId: number;
+  collection?: CollectionModel;
+  collectionId?: number;
 }
 
 function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
   const [dialogState, setDialogState] = useState(false);
-  const { setValue, register, formState, getValues, reset } = useForm();
   const dispatch = useAppDispatch();
-  const [selectedCollection, setSelectedCollection] = useState("");
-  const params = useParams();
-  const projectId = parseInt(params.projectId ?? "-1");
+
+  const formSchema = z.object({
+    name: z.string({ required_error: "Name is required" }).min(1).max(25),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
 
   useEffect(() => {
-    if (!dialogState) {
-      reset();
-      setSelectedCollection("");
+    if (props.type === "ADD" && !dialogState) {
+      form.reset();
     }
-  }, [dialogState, reset]);
+  }, [dialogState, form, props.type]);
 
   useEffect(() => {
-    if (props.type !== "ADD" && selectedCollection) {
-      const collectionList = props.collectionList ?? [];
-      setValue("name", collectionList[parseInt(selectedCollection)].name);
+    if (props.type === "EDIT") {
+      form.setValue("name", props.collection?.name ?? "");
     }
-  }, [props.collectionList, props.type, setValue, selectedCollection]);
+  }, [form, props.collection?.name, props.type]);
 
-  const onAddClick = useCallback(
+  const onAddClicked = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
         const newCollection: CollectionModel = {
@@ -234,34 +282,35 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
         };
         dispatch(clearTester());
 
-        dispatch(addCollection({ data: newCollection, projectId }));
+        dispatch(
+          addCollection({ data: newCollection, projectId: props.projectId })
+        );
 
         setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, projectId]
+    [dispatch, form, props.projectId]
   );
 
   const onUpdateClicked = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
-        const collectionList = props.collectionList ?? [];
         const updatedCollection: CollectionModel = {
           name: formData.name,
-          tests: collectionList[parseInt(selectedCollection)].tests ?? [],
+          tests: props.collection?.tests ?? [],
         };
         dispatch(clearTester());
 
         dispatch(
           updateCollection({
             data: updatedCollection,
-            projectId,
-            collectionId: parseInt(selectedCollection),
+            projectId: props.projectId,
+            collectionId: props.collectionId ?? -1,
           })
         );
 
@@ -270,58 +319,30 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
     },
     [
       dispatch,
-      formState.isValid,
-      getValues,
-      projectId,
-      props.collectionList,
-      selectedCollection,
+      form,
+      props.collection?.tests,
+      props.collectionId,
+      props.projectId,
     ]
   );
-
-  const onRunClicked = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      props.runTests?.(parseInt(selectedCollection));
-      setDialogState(false);
-    },
-    [props, selectedCollection]
-  );
-
-  const buttonClass = useCallback(() => {
-    switch (props.type) {
-      case "ADD":
-        return "fixed right-[24px] bottom-[24px] z-100 p-4";
-      case "EDIT":
-        return "fixed right-[24px] bottom-[96px] z-100 p-4";
-      case "RUN":
-        return "fixed right-[24px] bottom-[169px] z-100 p-4";
-      default:
-        return "";
-    }
-  }, [props.type]);
-
-  const RenderIcon = useCallback(() => {
-    switch (props.type) {
-      case "ADD":
-        return <Plus color="lightblue" size={24}></Plus>;
-      case "EDIT":
-        return <Edit color="lightgrey" size={24}></Edit>;
-      case "RUN":
-        return <Play color="lightgreen"></Play>;
-      default:
-        return <></>;
-    }
-  }, [props.type]);
 
   return (
     <Dialog open={dialogState}>
       <Button
-        className={buttonClass()}
+        className={
+          props.type === "ADD"
+            ? "fixed right-[24px] bottom-[24px] z-100 p-4"
+            : "p-2 my-auto ml-2"
+        }
         size="xs"
-        variant="secondary"
+        variant={props.type === "ADD" ? "secondary" : "ghost"}
         onClick={() => setDialogState(true)}
       >
-        <RenderIcon />
+        {props.type === "ADD" ? (
+          <Plus color="lightblue" size={24}></Plus>
+        ) : (
+          <Edit color="lightgrey" size={24}></Edit>
+        )}
       </Button>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -337,87 +358,37 @@ function AddEditCollectionComponent(props: AddEditCollectionComponentProps) {
           <DialogTitle>{props.type} Collection</DialogTitle>
         </DialogHeader>
 
-        {props.type !== "ADD" ? (
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="collection" className="text-right">
-              Collection
-            </Label>
-            <Select
-              className="col-span-3"
-              theme={(theme) => ({
-                ...theme,
-                borderRadius: 4,
-                colors: {
-                  ...theme.colors,
-                  primary: "#1d283a",
-                  neutral0: "#030711",
-                  primary25: "#0d1324",
-                  neutral20: "#1d283a",
-                  neutral30: "#1d283a",
-                  neutral80: "#ffffff",
-                },
-              })}
-              value={{
-                value: selectedCollection,
-                label: selectedCollection
-                  ? props.collectionList?.[parseInt(selectedCollection)].name
-                  : "",
-              }}
-              onChange={(event) => setSelectedCollection(event?.value ?? "")}
-              options={props.collectionList?.map((col, idx) => ({
-                value: idx.toString(),
-                label: col.name,
-              }))}
-              isSearchable={true}
-            ></Select>
-          </div>
-        ) : null}
+        <Form {...form}>
+          <form
+            className="grid gap-4 py-4"
+            onSubmit={(e) =>
+              props.type === "ADD" ? onAddClicked(e) : onUpdateClicked(e)
+            }
+          >
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right">Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="col-span-3"
+                      placeholder="Enter Collection Name"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-        <form
-          className="grid gap-4 py-4"
-          onSubmit={(e) =>
-            props.type === "ADD"
-              ? onAddClick(e)
-              : props.type === "EDIT"
-              ? onUpdateClicked(e)
-              : onRunClicked(e)
-          }
-        >
-          {props.type !== "RUN" ? (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                {...register("name", { required: true })}
-                id="name"
-                type="text"
-                className="col-span-3"
-                placeholder="Collection Name"
-                disabled={props.type === "EDIT" && !selectedCollection}
-              />
-            </div>
-          ) : null}
-
-          {props.type === "EDIT" && selectedCollection ? (
-            <AddEditTestComponent
-              type="ADD"
-              collectionId={parseInt(selectedCollection)}
-            ></AddEditTestComponent>
-          ) : null}
-
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={
-                (!formState.isValid && !formState.isDirty) ||
-                (props.type === "RUN" && !selectedCollection)
-              }
-            >
-              Submit
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button type="submit" disabled={!form.formState.isValid}>
+                Submit
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
