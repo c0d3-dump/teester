@@ -299,10 +299,11 @@ function RunFakerComponent(props: RunFakerComponentProps) {
             await runQuery(props.config, sqlString);
           }
 
-          setDialogState(false);
           toast.success("Fake data genarated successfully");
         }
       } catch (err) {}
+
+      setDialogState(false);
     },
     [formState.isValid, getValues, props.config, props.faker]
   );

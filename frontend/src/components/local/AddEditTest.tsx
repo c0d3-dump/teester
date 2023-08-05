@@ -12,7 +12,6 @@ import {
 import { Card, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
-import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useAppDispatch } from "src/redux/base/hooks";
@@ -23,6 +22,17 @@ import { addTest, updateTest } from "src/redux/reducers/project";
 import { Textarea } from "../ui/textarea";
 import { clearTester } from "src/redux/reducers/tester";
 import { toast } from "react-toastify";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 interface AddEditTestComponentProps {
   type: "ADD" | "EDIT";
@@ -183,40 +193,68 @@ interface TestComponentProps {
 }
 
 function ApiTestComponent(props: TestComponentProps) {
-  const { setValue, register, formState, getValues } = useForm();
   const dispatch = useAppDispatch();
+
+  const formSchema = z.object({
+    name: z.string({ required_error: "Name is required" }).min(1).max(25),
+    methodType: z
+      .string({ required_error: "MethodType is required" })
+      .min(1)
+      .max(25),
+    endpoint: z
+      .string({ required_error: "Endpoint is required" })
+      .min(1)
+      .max(100),
+    header: z.string().optional(),
+    body: z.string().optional(),
+    assertStatus: z
+      .number({ required_error: "Assert Status is required" })
+      .min(-1)
+      .max(1000),
+    assertBody: z.string().optional(),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
+
+  useEffect(() => {
+    if (props.type === "ADD" && !props.dialogState) {
+      form.reset();
+    }
+  }, [form, props.dialogState, props.type]);
 
   useEffect(() => {
     if (props.type === "EDIT" || props.test) {
       const apiData = props.test as ApiModel;
-      setValue("name", apiData.name);
-      setValue("methodType", apiData.methodType);
-      setValue("endpoint", apiData.endpoint);
-      setValue("header", apiData.header);
-      setValue("body", apiData.body);
-      setValue("assertStatus", apiData.assertion.status);
-      setValue("assertBody", apiData.assertion.body);
+      form.setValue("name", apiData.name ?? "");
+      form.setValue("methodType", apiData.methodType ?? "");
+      form.setValue("endpoint", apiData.endpoint ?? "");
+      form.setValue("header", apiData.header ?? "");
+      form.setValue("body", apiData.body ?? "");
+      form.setValue("assertStatus", apiData.assertion.status ?? -1);
+      form.setValue("assertBody", apiData.assertion.body ?? "");
     }
-  }, [props.test, props.type, setValue]);
+  }, [form, props.test, props.type]);
 
-  const onAddClick = useCallback(
+  const onAddClicked = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
         const newTest: ApiModel = {
           name: formData.name,
           endpoint: formData.endpoint,
           methodType: formData.methodType,
-          body: formData.body,
+          body: formData.body ?? "{}",
           assertion: {
             status: formData.assertStatus,
-            body: formData.assertBody,
+            body: formData.assertBody ?? "{}",
           },
-          header: formData.header,
+          header: formData.header ?? "{}",
         };
         dispatch(clearTester());
 
@@ -230,27 +268,27 @@ function ApiTestComponent(props: TestComponentProps) {
         props.setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, props]
+    [dispatch, form, props]
   );
 
   const onUpdateClicked = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
         const updatedTest: ApiModel = {
           name: formData.name,
           endpoint: formData.endpoint,
           methodType: formData.methodType,
-          body: formData.body,
+          body: formData.body ?? "{}",
           assertion: {
             status: formData.assertStatus,
-            body: formData.assertBody,
+            body: formData.assertBody ?? "{}",
           },
-          header: formData.header,
+          header: formData.header ?? "{}",
         };
         dispatch(clearTester());
 
@@ -265,109 +303,187 @@ function ApiTestComponent(props: TestComponentProps) {
         props.setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, props]
+    [dispatch, form, props]
   );
 
   return (
-    <form
-      className="grid gap-4 py-4"
-      onSubmit={(e) =>
-        props.type === "ADD" ? onAddClick(e) : onUpdateClicked(e)
-      }
-    >
-      <div className="space-y-4">
-        <Label htmlFor="tname">Name</Label>
-        <Input
-          {...register("name", { required: true })}
-          id="tname"
-          type="text"
+    <Form {...form}>
+      <form
+        className="grid gap-4 py-4"
+        onSubmit={(e) =>
+          props.type === "ADD" ? onAddClicked(e) : onUpdateClicked(e)
+        }
+      >
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem className="space-y-4">
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter Test Name" {...field} />
+              </FormControl>
+            </FormItem>
+          )}
         />
-      </div>
 
-      <Label htmlFor="endpoint">Endpoint</Label>
-      <div className="flex">
-        <select
-          {...register("methodType", { required: true })}
-          className="h-10 w-[108px] items-center justify-between mr-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <option value="GET">GET</option>
-          <option value="POST">POST</option>
-          <option value="DELETE">DELETE</option>
-          <option value="PUT">PUT</option>
-        </select>
-        <Input
-          {...register("endpoint", { required: true })}
-          id="endpoint"
-          type="text"
-          className="col-span-3"
-        />
-      </div>
+        <FormLabel className="my-1" htmlFor="endpoint">
+          Endpoint
+        </FormLabel>
 
-      <div className="flex gap-4">
-        <div className="space-y-4 grow">
-          <Label htmlFor="header">Header</Label>
-          <Textarea
-            {...register("header", { required: false })}
-            id="header"
-            className="col-span-3 h-36"
+        <div className="flex gap-2">
+          <FormField
+            control={form.control}
+            name="methodType"
+            defaultValue="GET"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className="w-[108px]">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="GET">GET</SelectItem>
+                        <SelectItem value="POST">POST</SelectItem>
+                        <SelectItem value="DELETE">DELETE</SelectItem>
+                        <SelectItem value="PUT">PUT</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="endpoint"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <Input placeholder="Enter Endpoint" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
         </div>
 
-        <div className="space-y-4 grow">
-          <Label htmlFor="body">Body</Label>
-          <Textarea
-            {...register("body", { required: false })}
-            id="body"
-            className="col-span-3 h-36"
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="header"
+            defaultValue="{}"
+            render={({ field }) => (
+              <FormItem className="space-y-4 grow">
+                <FormLabel>Header</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Enter Header"
+                    className="col-span-3 h-36"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="body"
+            defaultValue="{}"
+            render={({ field }) => (
+              <FormItem className="space-y-4 grow">
+                <FormLabel>Body</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Enter Body"
+                    className="col-span-3 h-36"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
           />
         </div>
-      </div>
 
-      <div className="space-y-4">
-        <Label htmlFor="status">Status</Label>
-        <Input
-          {...register("assertStatus", { required: true })}
-          id="status"
-          type="number"
+        <FormField
+          control={form.control}
+          name="assertStatus"
+          render={({ field }) => (
+            <FormItem className="space-y-4">
+              <FormLabel>Assert Status</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter Test Name" type="number" {...field} />
+              </FormControl>
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="space-y-4">
-        <Label htmlFor="assertBody">Assert body</Label>
-        <Textarea
-          {...register("assertBody", { required: false })}
-          id="assertBody"
-          className="col-span-3 h-36"
+        <FormField
+          control={form.control}
+          name="assertBody"
+          defaultValue="{}"
+          render={({ field }) => (
+            <FormItem className="space-y-4">
+              <FormLabel>Assert Body</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Enter Assert Body"
+                  className="col-span-3 h-36"
+                  {...field}
+                />
+              </FormControl>
+            </FormItem>
+          )}
         />
-      </div>
 
-      <DialogFooter>
-        <Button type="submit" disabled={!formState.isValid} className="">
-          Submit
-        </Button>
-      </DialogFooter>
-    </form>
+        <DialogFooter>
+          <Button type="submit" disabled={!form.formState.isValid}>
+            Submit
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 }
 
 function DbTestComponent(props: TestComponentProps) {
-  const { setValue, register, formState, getValues } = useForm();
   const dispatch = useAppDispatch();
+
+  const formSchema = z.object({
+    name: z.string({ required_error: "Name is required" }).min(1).max(25),
+    query: z.string({ required_error: "Query is required" }).min(1).max(1000),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
+
+  useEffect(() => {
+    if (props.type === "ADD" && !props.dialogState) {
+      form.reset();
+    }
+  }, [form, props.dialogState, props.type]);
 
   useEffect(() => {
     if (props.type === "EDIT" || props.test) {
       const dbData = props.test as DbModel;
-      setValue("name", dbData.name);
-      setValue("query", dbData.query);
+      form.setValue("name", dbData?.name ?? "");
+      form.setValue("query", dbData?.query ?? "");
     }
-  }, [props.test, props.type, setValue]);
+  }, [form, props.test, props.type]);
 
-  const onAddClick = useCallback(
+  const onAddClicked = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
         const newTest: DbModel = {
@@ -386,15 +502,15 @@ function DbTestComponent(props: TestComponentProps) {
         props.setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, props]
+    [dispatch, form, props]
   );
 
   const onUpdateClicked = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const formData = getValues();
-      const isValid = formState.isValid;
+      const formData = form.getValues();
+      const isValid = form.formState.isValid;
 
       if (isValid) {
         const updatedTest: DbModel = {
@@ -414,39 +530,57 @@ function DbTestComponent(props: TestComponentProps) {
         props.setDialogState(false);
       }
     },
-    [dispatch, formState.isValid, getValues, props]
+    [dispatch, form, props]
   );
 
   return (
-    <form
-      className="grid gap-4 py-4"
-      onSubmit={(e) =>
-        props.type === "ADD" ? onAddClick(e) : onUpdateClicked(e)
-      }
-    >
-      <div className="space-y-4">
-        <Label htmlFor="dname">Name</Label>
-        <Input
-          {...register("name", { required: true })}
-          id="dname"
-          type="text"
+    <Form {...form}>
+      <form
+        className="grid gap-4 py-4"
+        onSubmit={(e) =>
+          props.type === "ADD" ? onAddClicked(e) : onUpdateClicked(e)
+        }
+      >
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem className="space-y-4">
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input
+                  className="col-span-3"
+                  placeholder="Enter Test Name"
+                  {...field}
+                />
+              </FormControl>
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="space-y-4">
-        <Label htmlFor="query">Query</Label>
-        <Textarea
-          {...register("query", { required: true })}
-          id="query"
-          className="col-span-3 h-[532px]"
+        <FormField
+          control={form.control}
+          name="query"
+          render={({ field }) => (
+            <FormItem className="space-y-4">
+              <FormLabel>Query</FormLabel>
+              <FormControl>
+                <Textarea
+                  className="col-span-3 h-[532px]"
+                  placeholder="Enter Test Query"
+                  {...field}
+                />
+              </FormControl>
+            </FormItem>
+          )}
         />
-      </div>
 
-      <DialogFooter>
-        <Button type="submit" disabled={!formState.isValid}>
-          Submit
-        </Button>
-      </DialogFooter>
-    </form>
+        <DialogFooter>
+          <Button type="submit" disabled={!form.formState.isValid}>
+            Submit
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 }

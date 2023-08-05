@@ -7,7 +7,15 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Edit, Play, Plus, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Edit,
+  Play,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { Input } from "../ui/input";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -27,7 +35,11 @@ import {
   extractVariables,
   replaceTokens,
 } from "src/utils";
-import { addTester, clearTester } from "src/redux/reducers/tester";
+import {
+  addTester,
+  clearTester,
+  selectTester,
+} from "src/redux/reducers/tester";
 import { useNavigate, useParams } from "react-router-dom";
 import { setCollectionName } from "src/redux/reducers/app";
 import { Card, CardHeader, CardTitle } from "../ui/card";
@@ -49,6 +61,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
 export default function Collection() {
   const projects = useAppSelector(selectProject);
   const dispatch = useAppDispatch();
+  const testers = useAppSelector(selectTester);
   const params = useParams();
   const projectId = parseInt(params.projectId ?? "-1");
   const navigate = useNavigate();
@@ -61,6 +74,15 @@ export default function Collection() {
   useEffect(() => {
     dispatch(setCollectionName(projects[projectId].name));
   }, [dispatch, projectId, projects]);
+
+  const checkSuccess = (collectionId: number) => {
+    const tempTesters = testers.filter(
+      (tester) => tester.collectionId === collectionId
+    );
+
+    if (tempTesters.length <= 0) return null;
+    return tempTesters.filter((tester) => !tester.assert).length <= 0;
+  };
 
   const runTests = useCallback(
     async (collectionId: number) => {
@@ -178,15 +200,34 @@ export default function Collection() {
                 <CardTitle>{col.name}</CardTitle>
               </CardHeader>
 
+              <Button
+                type="button"
+                variant="ghost"
+                className="p-2 my-auto pointer-events-none"
+                size="xs"
+              >
+                {checkSuccess(idx) === null ? (
+                  <></>
+                ) : checkSuccess(idx) ? (
+                  <CheckCircle2 color="rgb(34 197 94)"></CheckCircle2>
+                ) : (
+                  <AlertTriangle color="rgb(239 68 68)"></AlertTriangle>
+                )}
+              </Button>
+
               <div className="flex align-middle">
-                <Button
-                  className="p-2 my-auto mx-2"
-                  size="xs"
-                  variant="ghost"
-                  onClick={() => runTests(idx)}
-                >
-                  <Play color="lightgreen"></Play>
-                </Button>
+                {col.tests.length > 0 ? (
+                  <Button
+                    className="p-2 my-auto mx-2"
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => runTests(idx)}
+                  >
+                    <Play color="lightgreen"></Play>
+                  </Button>
+                ) : (
+                  <></>
+                )}
 
                 <AddEditCollectionComponent
                   type="EDIT"
