@@ -11,7 +11,6 @@ import {
 } from "../ui/dialog";
 import { Card, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-
 import { Input } from "../ui/input";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useAppDispatch } from "src/redux/base/hooks";
@@ -33,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Label } from "../ui/label";
 
 interface AddEditTestComponentProps {
   type: "ADD" | "EDIT";
@@ -208,9 +208,9 @@ function ApiTestComponent(props: TestComponentProps) {
     header: z.string().optional(),
     body: z.string().optional(),
     assertStatus: z
-      .number({ required_error: "Assert Status is required" })
-      .min(-1)
-      .max(1000),
+      .string({ required_error: "Assert Status is required" })
+      .min(1)
+      .max(4),
     assertBody: z.string().optional(),
   });
 
@@ -229,10 +229,13 @@ function ApiTestComponent(props: TestComponentProps) {
       const apiData = props.test as ApiModel;
       form.setValue("name", apiData.name ?? "");
       form.setValue("methodType", apiData.methodType ?? "");
-      form.setValue("endpoint", apiData.endpoint ?? "");
+      form.setValue("endpoint", apiData.endpoint);
       form.setValue("header", apiData.header ?? "");
       form.setValue("body", apiData.body ?? "");
-      form.setValue("assertStatus", apiData.assertion.status ?? -1);
+      form.setValue(
+        "assertStatus",
+        apiData.assertion.status.toString() ?? "-1"
+      );
       form.setValue("assertBody", apiData.assertion.body ?? "");
     }
   }, [form, props.test, props.type]);
@@ -247,11 +250,11 @@ function ApiTestComponent(props: TestComponentProps) {
       if (isValid) {
         const newTest: ApiModel = {
           name: formData.name,
-          endpoint: formData.endpoint,
-          methodType: formData.methodType,
+          endpoint: formData.endpoint ?? "",
+          methodType: formData.methodType ?? "",
           body: formData.body ?? "{}",
           assertion: {
-            status: formData.assertStatus,
+            status: parseInt(formData.assertStatus) ?? -1,
             body: formData.assertBody ?? "{}",
           },
           header: formData.header ?? "{}",
@@ -281,11 +284,11 @@ function ApiTestComponent(props: TestComponentProps) {
       if (isValid) {
         const updatedTest: ApiModel = {
           name: formData.name,
-          endpoint: formData.endpoint,
-          methodType: formData.methodType,
+          endpoint: formData.endpoint ?? "",
+          methodType: formData.methodType ?? "",
           body: formData.body ?? "{}",
           assertion: {
-            status: formData.assertStatus,
+            status: parseInt(formData.assertStatus) ?? -1,
             body: formData.assertBody ?? "{}",
           },
           header: formData.header ?? "{}",
@@ -327,9 +330,9 @@ function ApiTestComponent(props: TestComponentProps) {
           )}
         />
 
-        <FormLabel className="my-1" htmlFor="endpoint">
+        <Label className="my-1" htmlFor="endpoint">
           Endpoint
-        </FormLabel>
+        </Label>
 
         <div className="flex gap-2">
           <FormField
@@ -418,7 +421,13 @@ function ApiTestComponent(props: TestComponentProps) {
             <FormItem className="space-y-4">
               <FormLabel>Assert Status</FormLabel>
               <FormControl>
-                <Input placeholder="Enter Test Name" type="number" {...field} />
+                <Input
+                  placeholder="Enter Assert Status"
+                  type="number"
+                  min={0}
+                  max={1000}
+                  {...field}
+                />
               </FormControl>
             </FormItem>
           )}

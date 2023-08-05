@@ -156,15 +156,26 @@ function AddEditProjectComponent(props: AddEditProjectComponentProps) {
   const [dialogState, setDialogState] = useState(false);
   const dispatch = useAppDispatch();
 
-  const formSchema = z.object({
-    name: z.string({ required_error: "Name is required" }).min(1).max(25),
-    type: z.string({ required_error: "Type is required" }),
-    host: z.string().max(100).optional(),
-    dbType: z.string().max(25).optional(),
-    dbUrl: z.string().max(100).optional(),
-    header: z.string().max(200).default("{}").optional(),
-    withCredentials: z.boolean().default(false).optional(),
-  });
+  const formSchema = z
+    .object({
+      name: z.string({ required_error: "Name is required" }).min(1).max(25),
+      type: z.string({ required_error: "Type is required" }),
+      host: z.string().max(100).optional(),
+      dbType: z.string().max(25).optional(),
+      dbUrl: z.string().max(100).optional(),
+      header: z.string().max(200).default("{}").optional(),
+      withCredentials: z.boolean().default(false).optional(),
+    })
+    .refine((data) => {
+      if (data.type === "UI") {
+        return data.host;
+      } else if (data.type === "FAKER") {
+        return data.dbType && data.dbUrl;
+      } else if (data.type === "API") {
+        return data.host && data.dbType && data.dbUrl;
+      }
+      return true;
+    });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
