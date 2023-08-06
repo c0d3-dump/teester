@@ -64,7 +64,9 @@ export default function TestComponent() {
 
   useEffect(() => {
     dispatch(
-      setCollectionName(projects[projectId].collections[collectionId].name)
+      setCollectionName(
+        `${projects[projectId].name} / ${projects[projectId].collections[collectionId].name}`
+      )
     );
   }, [collectionId, dispatch, projectId, projects]);
 
