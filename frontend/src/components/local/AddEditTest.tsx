@@ -338,7 +338,7 @@ function ApiTestComponent(props: TestComponentProps) {
           <FormField
             control={form.control}
             name="methodType"
-            defaultValue="GET"
+            defaultValue={(props.test as ApiModel)?.methodType}
             render={({ field }) => (
               <FormItem>
                 <FormControl>

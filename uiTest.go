@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/go-rod/rod/lib/input"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
-	"github.com/ysmood/gson"
 )
 
 type Uis struct {
@@ -34,118 +32,9 @@ type UiTest struct {
 	Data        []Uis  `json:"data"`
 }
 
-func (m *UiProject) CaptureEvents(uiId int) {
+func (m *UiProject) initBrowser() {
 	l := launcher.New().Headless(false)
-	u := l.MustLaunch()
-
-	browser := rod.New().ControlURL(u).MustConnect().MustIncognito().Trace(true).Sleeper(rod.NotFoundSleeper)
-
-	page := browser.MustPage(m.Config.Host)
-	page.MustWindowMaximize().MustWaitStable()
-
-	// TODO: add more events to listen to
-	eventQuery := `
-		() => {
-			document.addEventListener('keydown', (e) => {
-				if (['Enter', 'Tab', ' ', 'Backspace', 'Escape', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'PageDown', 'PageUp'].includes(e.key)) {
-					teesterClicked(e.key);
-				}
-			})
-
-			document.addEventListener('click', 
-			(e) => {
-				const dialog = document.querySelector('#teesterDialog');
-				
-				if (!dialog.open) {
-					const data = {
-						tag: e.target.tagName,
-						id: e.target.id,
-						class: e.target.classList,
-						innerText: e.target.innerText,
-						title: e.target.title
-					};
-
-					const options = document.querySelectorAll("option.teesterOption");
-					for (const option of options) {
-						option.remove();
-					}
-
-					const selection = document.querySelector("#teesterSelect");
-
-					let option = document.createElement('option');
-					option.value = "Nothing";
-					option.innerText = "Nothing";
-					option.classList.add("teesterOption");
-					selection.appendChild(option);
-
-					option = document.createElement('option');
-					option.value = data["tag"] + "#" + data["id"];
-					option.innerText = "id" + ": " + data["id"];
-					option.classList.add("teesterOption");
-					selection.appendChild(option);
-
-					for (const selector of ['title', 'innerText']) {
-						const option = document.createElement('option');
-						option.value = data["tag"] + "[" + selector + "=" + data[selector] + "]";
-						option.innerText = selector + ": " + data[selector];
-						option.classList.add("teesterOption");
-						selection.appendChild(option);
-					}
-
-					for (const selector of data.class) {
-						const option = document.createElement('option');
-						option.value = data["tag"] + "." + selector;
-						option.innerText = "class: " + selector;
-						option.classList.add("teesterOption");
-						selection.appendChild(option);
-					}
-
-					dialog.showModal();
-				}
-			});
-		}
-	`
-
-	dialog := `
-		() => {
-			const dialog = document.createElement("dialog");
-				dialog.id = "teesterDialog";
-				dialog.innerHTML = 
-					"<form method='dialog' id='teesterForm'>" +
-						"<div style='margin-bottom: 8px;'>" +
-							"<select id='teesterSelect' style='width: 100%; background-color: transparent;'>" +
-							"</select>" +
-						"</div>" +
-						"<button type='submit' style='background-color: gray; padding: 2px 8px; border-radius: 8px; display: flex; margin-left: auto;'>Submit</button>" +
-					"</form>"
-				;
-
-			document.body.appendChild(dialog);
-
-			document.querySelector("#teesterForm").addEventListener('submit', (e) => {
-        e.preventDefault();
-        const selection = document.querySelector("#teesterSelect");
-        const selectedIndex = selection.selectedIndex;
-        const selectedOption = selection.options[selectedIndex];
-        const selectedValue = selectedOption.value;
-
-				teesterClicked(selectedValue);
-				dialog.close();
-      });
-		}
-	`
-
-	page.MustExpose("captureMe", func(v gson.JSON) (interface{}, error) {
-		page.MustEval("() => { document.addEventListener('click', (e) => console.log(e)) }")
-		page.MustEval(dialog)
-		page.MustEval(eventQuery)
-		return nil, nil
-	})
-
-	page.MustExpose("teesterClicked", func(v gson.JSON) (interface{}, error) {
-		fmt.Println(v.Str())
-		return nil, nil
-	})
+	l.MustLaunch()
 }
 
 func (m *UiProject) Run(uiId int) {

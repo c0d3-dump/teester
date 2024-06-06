@@ -9,8 +9,6 @@ import (
 	"main/frontend"
 	"net/http"
 	"os"
-	"os/exec"
-	"runtime"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
@@ -64,24 +62,6 @@ func fileCheck(filename string) error {
 	return nil
 }
 
-func openbrowser(url string) {
-	var err error
-
-	switch runtime.GOOS {
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func main() {
 	dataFileName := "data.json"
 	err := fileCheck(dataFileName)
@@ -93,7 +73,7 @@ func main() {
 	app := echo.New()
 
 	app.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3333"},
+		AllowOrigins:     []string{"http://localhost:3333", "*"},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 		AllowMethods:     []string{echo.GET, echo.POST},
 		AllowCredentials: true,
@@ -106,6 +86,14 @@ func main() {
 
 	app.GET("/health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello there!")
+	})
+
+	app.POST("/init-browser", func(c echo.Context) error {
+		var uiTestData UiProject
+		uiTestData.initBrowser()
+
+		var jsonStruct []map[string]interface{}
+		return c.JSON(http.StatusOK, jsonStruct)
 	})
 
 	app.GET("/getData", func(c echo.Context) error {
@@ -245,6 +233,6 @@ func main() {
 		return c.NoContent(http.StatusOK)
 	})
 
-	go openbrowser("http://localhost:3333")
+	// go openbrowser("http://localhost:3333")
 	log.Fatal(app.Start(":3333"))
 }

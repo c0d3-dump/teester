@@ -96,11 +96,8 @@ export const runUiTest = async (projectId: number, uiId: number) => {
   });
 };
 
-export const captureEvents = async (projectId: number, uiId: number) => {
-  return axios.post(`${env.SERVER_URL}/capture-me`, {
-    projectId,
-    uiId,
-  });
+export const initBrowser = async () => {
+  return axios.post(`${env.SERVER_URL}/init-browser`);
 };
 
 export const isDeepEqual = (targetObj: any, sourceObj: any) => {
