@@ -73,7 +73,7 @@ func main() {
 	app := echo.New()
 
 	app.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3333", "*"},
+		AllowOrigins:     []string{"http://localhost:3333"},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 		AllowMethods:     []string{echo.GET, echo.POST},
 		AllowCredentials: true,

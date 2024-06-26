@@ -196,7 +196,7 @@ function ApiTestComponent(props: TestComponentProps) {
   const dispatch = useAppDispatch();
 
   const formSchema = z.object({
-    name: z.string({ required_error: "Name is required" }).min(1).max(25),
+    name: z.string({ required_error: "Name is required" }).min(1).max(255),
     methodType: z
       .string({ required_error: "MethodType is required" })
       .min(1)
@@ -204,7 +204,7 @@ function ApiTestComponent(props: TestComponentProps) {
     endpoint: z
       .string({ required_error: "Endpoint is required" })
       .min(1)
-      .max(100),
+      .max(255),
     header: z.string().optional(),
     body: z.string().optional(),
     assertStatus: z
