@@ -148,7 +148,10 @@ export const extractFakerVariables = (targetObj: any) => {
 
   // Find all matches in the string
   const matches = targetObj.match(regex);
-  console.log(matches);
+
+  if (!matches) {
+    return {}
+  }
 
   for (const match of matches) {
     const m = match.replace('${.', '').replace('}', '')
