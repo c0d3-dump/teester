@@ -144,18 +144,16 @@ export const extractVariables = (targetObj: any, templateObj: any) => {
 export const extractFakerVariables = (targetObj: any) => {
   const variables: any = {};
 
-  targetObj = JSON.parse(targetObj)
+  const regex = /\${\.\w+}/g;
 
-  const regex = /^\${\..+}$/;
+  // Find all matches in the string
+  const matches = targetObj.match(regex);
+  console.log(matches);
 
-  for (const i in targetObj) {
-    const targetOb = targetObj[i];
-
-    if (regex.test(targetOb)) {
-      const targetO = targetOb.replace('${.', '').replace('}', '')
-      const val = FakerType.find((fk) => fk.name === targetO)?.gen();
-      variables['.' + targetO] = val;
-    }
+  for (const match of matches) {
+    const m = match.replace('${.', '').replace('}', '')
+    const val = FakerType.find((fk) => fk.name === m)?.gen();
+    variables['.' + m] = val;
   }
 
   return variables;
