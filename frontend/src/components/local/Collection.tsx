@@ -34,6 +34,7 @@ import {
   runQuery,
   extractVariables,
   replaceTokens,
+  extractFakerVariables,
 } from "src/utils";
 import {
   addTester,
@@ -103,7 +104,12 @@ export default function Collection() {
               config.header ? config.header : "{}"
             );
 
-            const header = replaceTokens(apiModel.header, variables);
+            const vars = extractFakerVariables(apiModel.header);
+
+            const header = replaceTokens(apiModel.header, {
+              ...variables,
+              ...vars,
+            });
             apiModel.header = header ? JSON.parse(header) : {};
 
             apiModel.header = {
@@ -115,7 +121,12 @@ export default function Collection() {
           }
 
           try {
-            const body = replaceTokens(apiModel.body, variables);
+            const vars = extractFakerVariables(apiModel.body);
+
+            const body = replaceTokens(apiModel.body, {
+              ...variables,
+              ...vars,
+            });
             apiModel.body = JSON.parse(body);
           } catch (error) {
             apiModel.body = {};

@@ -42,6 +42,7 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import {
+  extractFakerVariables,
   extractVariables,
   isDeepEqual,
   replaceTokens,
@@ -167,7 +168,13 @@ export default function TestComponent() {
 
         try {
           const configHeader = JSON.parse(config.header ? config.header : "{}");
-          const header = replaceTokens(apiModel.header, variables);
+
+          const vars = extractFakerVariables(apiModel.header);
+
+          const header = replaceTokens(apiModel.header, {
+            ...variables,
+            ...vars,
+          });
           apiModel.header = header ? JSON.parse(header) : {};
 
           apiModel.header = {
@@ -179,7 +186,12 @@ export default function TestComponent() {
         }
 
         try {
-          const body = replaceTokens(apiModel.body, variables);
+          const vars = extractFakerVariables(apiModel.body);
+
+          const body = replaceTokens(apiModel.body, {
+            ...variables,
+            ...vars,
+          });
           apiModel.body = JSON.parse(body);
         } catch (error) {
           apiModel.body = {};
