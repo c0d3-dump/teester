@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-
 import { X, ClipboardCopy, ClipboardPaste, Plus, Expand } from "lucide-react";
-
 import { AlertTriangle, Info } from "lucide-react";
 import {
   Dialog,
@@ -29,7 +27,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/button";
-import { ApiModel, DbModel } from "src/redux/models/project";
+import { ApiModel, DbModel, ProjectModel } from "src/redux/models/project";
 import { addTest, updateTest } from "src/redux/reducers/project";
 import { Textarea } from "../ui/textarea";
 import {
@@ -61,7 +59,6 @@ import {
   runQuery,
 } from "src/utils";
 import { useParams } from "react-router-dom";
-import { selectProject } from "src/redux/reducers/project";
 
 interface AddEditTestComponentProps {
   type: "ADD" | "EDIT";
@@ -69,11 +66,12 @@ interface AddEditTestComponentProps {
   collectionId: number;
   testId?: number;
   test?: ApiModel | DbModel;
+  dimState?: number;
+  project: ProjectModel;
   onDragStart?(index: number): void;
   onDragEnd?(e: React.DragEvent<HTMLDivElement>): void;
   onDragEnter?(index: number): void;
   onDragOver?(e: React.DragEvent<HTMLDivElement>): void;
-  dimState?: number;
 }
 
 export default function AddEditTestComponent(props: AddEditTestComponentProps) {
@@ -84,7 +82,6 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
   const params = useParams();
   const projectId = parseInt(params.projectId ?? "-1");
   const collectionId = parseInt(params.collectionId ?? "-1");
-  const projects = useAppSelector(selectProject);
 
   useEffect(() => {
     setTestData(props.test);
@@ -152,8 +149,8 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
     async (testId: number) => {
       dispatch(clearTester());
 
-      const config = projects[projectId].config;
-      const test = projects[projectId].collections[collectionId].tests[testId];
+      const config = props.project.config;
+      const test = props.project.collections[collectionId].tests[testId];
 
       let variables = {};
 
@@ -245,7 +242,7 @@ export default function AddEditTestComponent(props: AddEditTestComponentProps) {
         );
       }
     },
-    [dispatch, projectId, projects, collectionId]
+    [dispatch, props.project.config, props.project.collections, collectionId]
   );
 
   return (

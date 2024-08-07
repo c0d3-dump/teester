@@ -1,5 +1,4 @@
 import { ApiModel, DbModel } from "src/redux/models/project";
-
 import AddEditTestComponent from "./AddEditTest";
 import { useAppDispatch, useAppSelector } from "src/redux/base/hooks";
 import { refreshCollection, selectProject } from "src/redux/reducers/project";
@@ -94,6 +93,7 @@ export default function TestComponent() {
             onDragEnter={onDragEnter}
             onDragOver={onDragOver}
             dimState={dimState}
+            project={projects[projectId]}
           ></AddEditTestComponent>
         ))}
       </div>
@@ -102,6 +102,7 @@ export default function TestComponent() {
         type="ADD"
         projectId={projectId}
         collectionId={collectionId}
+        project={projects[projectId]}
       ></AddEditTestComponent>
     </>
   );
